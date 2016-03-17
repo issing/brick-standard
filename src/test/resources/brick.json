@@ -1,0 +1,71 @@
+﻿{
+    /** 总线模块 */
+    bus : {
+        /* 协议 */
+        protocols : [ "net.isger.brick.test.bus.protocol" ],
+        /* 端点 */
+        endpoints : {
+            server : {
+                class : "net.isger.brick.bus.MinaInbound",
+                protocol : "command",
+                host : "127.0.0.1",
+                port : 9000,
+                handler : {
+                    class : "net.isger.brick.test.bus.TestHandler",
+                    prefix : "Server"
+                }
+            },
+            client : {
+                class : "net.isger.brick.bus.MinaOutbound",
+                protocol : "command",
+                host : "127.0.0.1",
+                port : 9000,
+                handler : {
+                    class : "net.isger.brick.test.bus.TestHandler",
+                    prefix : "Client"
+                }
+            }
+        }
+    },
+    /** 调度模块 */
+    sched-back : {
+        test : {
+            interval : "*/5 * * * * ?",
+            parameters : {
+                name : "employ"
+            }
+        }
+    },
+    /** 插件模块 */
+    plugin : {
+        test : {
+            services : [ {
+                path : "net.isger.brick.test.service",
+                bus : "test"
+            } ],
+            persists : [ {
+                path : "net.isger.brick.test.persist",
+                stub : "test"
+            } ]
+        }
+    },
+    /** 存根模块 */
+    stub : {
+        test : {
+            class : "net.isger.brick.test.TestStub",
+            parameters : {
+                driverName : "org.h2.Driver",
+                url : "jdbc:h2:mem:activiti;DB_CLOSE_DELAY=1000",
+                user : "sa"
+            }
+        },
+        testMyBatis : {
+            class : "net.isger.brick.stub.MyBatisStub",
+            parameters : {
+                driverName : "org.h2.Driver",
+                url : "jdbc:h2:mem:activiti;DB_CLOSE_DELAY=1000",
+                user : "sa"
+            }
+        }
+    }
+}
