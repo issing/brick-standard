@@ -1,6 +1,6 @@
 package net.isger.brick.bind;
 
-import net.isger.brick.Constants;
+import net.isger.brick.StandardConstants;
 import net.isger.brick.core.Console;
 import net.isger.brick.core.Module;
 import net.isger.brick.plugin.PluginCommand;
@@ -23,23 +23,23 @@ public class StandardConsole extends Console {
     protected void loadKernel() {
         /* 默认内核 */
         // 调度模块
-        Module module = getModule(Constants.MOD_SCHED);
+        Module module = getModule(StandardConstants.MOD_SCHED);
         if (module == null) {
-            addModule(Constants.MOD_SCHED, new SchedModule());
+            addModule(StandardConstants.MOD_SCHED, new SchedModule());
         }
-        addCommand(Constants.MOD_SCHED, SchedCommand.class);
+        addCommand(StandardConstants.MOD_SCHED, SchedCommand.class);
         // 插件模块
-        module = getModule(Constants.MOD_PLUGIN);
+        module = getModule(StandardConstants.MOD_PLUGIN);
         if (module == null) {
-            addModule(Constants.MOD_PLUGIN, new PluginModule());
+            addModule(StandardConstants.MOD_PLUGIN, new PluginModule());
         }
-        addCommand(Constants.MOD_PLUGIN, PluginCommand.class);
+        addCommand(StandardConstants.MOD_PLUGIN, PluginCommand.class);
         // 存根模块
-        module = getModule(Constants.MOD_STUB);
+        module = getModule(StandardConstants.MOD_STUB);
         if (module == null) {
-            addModule(Constants.MOD_STUB, new StubModule());
+            addModule(StandardConstants.MOD_STUB, new StubModule());
         }
-        addCommand(Constants.MOD_STUB, StubCommand.class);
+        addCommand(StandardConstants.MOD_STUB, StubCommand.class);
         /* 配置内核 */
         super.loadKernel();
     }

@@ -2,7 +2,6 @@ package net.isger.brick.stub;
 
 import net.isger.brick.core.Gate;
 import net.isger.brick.core.GateModule;
-import net.isger.util.Asserts;
 
 /**
  * 存根模块
@@ -12,20 +11,23 @@ import net.isger.util.Asserts;
  */
 public class StubModule extends GateModule {
 
+    public static final String STUB = "stub";
+
     public Class<? extends Gate> getTargetClass() {
-        Class<? extends Gate> targetClass = (Class<? extends Gate>) super
-                .getTargetClass();
-        if (targetClass == null) {
-            targetClass = Stub.class;
-        } else {
-            Asserts.argument(Stub.class.isAssignableFrom(targetClass),
-                    "The stub " + targetClass + " must implement the "
-                            + Stub.class);
-        }
-        return targetClass;
+        return Stub.class;
     }
 
+    @SuppressWarnings("unchecked")
     public Class<? extends Gate> getImplementClass() {
+        Class<? extends Gate> implClass = (Class<? extends Gate>) getImplementClass(
+                STUB, null);
+        if (implClass == null) {
+            implClass = super.getImplementClass();
+        }
+        return implClass;
+    }
+
+    public Class<? extends Gate> getBaseClass() {
         return SqlStub.class;
     }
 

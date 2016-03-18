@@ -10,7 +10,6 @@ import net.isger.brick.core.Gate;
 import net.isger.brick.core.GateCommand;
 import net.isger.brick.core.GateModule;
 import net.isger.brick.plugin.PluginCommand;
-import net.isger.util.Asserts;
 import net.isger.util.Dates;
 import net.isger.util.Strings;
 
@@ -36,6 +35,8 @@ import org.quartz.impl.StdSchedulerFactory;
  */
 public class SchedModule extends GateModule {
 
+    private static final String SCHED = "sched";
+
     private static final String META_SCHED = "meta.sched";
 
     private Scheduler scheduler;
@@ -47,19 +48,20 @@ public class SchedModule extends GateModule {
     }
 
     public Class<? extends Gate> getTargetClass() {
-        Class<? extends Gate> targetClass = (Class<? extends Gate>) super
-                .getTargetClass();
-        if (targetClass == null) {
-            targetClass = Sched.class;
-        } else {
-            Asserts.isAssignable(Sched.class, targetClass,
-                    "The schedule %s must implement the %s", targetClass,
-                    Sched.class);
-        }
-        return targetClass;
+        return Sched.class;
     }
 
+    @SuppressWarnings("unchecked")
     public Class<? extends Gate> getImplementClass() {
+        Class<? extends Gate> implClass = (Class<? extends Gate>) getImplementClass(
+                SCHED, null);
+        if (implClass == null) {
+            implClass = super.getImplementClass();
+        }
+        return implClass;
+    }
+
+    public Class<? extends Gate> getBaseClass() {
         return BaseSched.class;
     }
 
