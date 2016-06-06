@@ -2,11 +2,15 @@ package net.isger.brick.test.persist;
 
 import java.util.Date;
 
-import net.isger.brick.plugin.persist.BasePersist;
+import net.isger.brick.plugin.persist.CommonPersist;
 import net.isger.brick.stub.StubCommand;
 import net.isger.brick.test.bean.EmployModel;
 
-public class EmployPersist extends BasePersist {
+public class EmployPersist extends CommonPersist {
+
+    public EmployPersist() {
+        super(new EmployModel(""));
+    }
 
     public void test() {
         StubCommand cmd = getStubCommand();

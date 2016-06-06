@@ -9,6 +9,9 @@ import net.isger.util.anno.Ignore;
 @Ignore
 public class BaseService extends PluginTarget implements Service {
 
+    public void initial() {
+    }
+
     protected <T extends Command> T toExecute(T cmd) {
         getConsole().execute(cmd);
         return cmd;
@@ -18,7 +21,7 @@ public class BaseService extends PluginTarget implements Service {
         PluginCommand cmd = mockPluginCommand();
         cmd.setDomain(domain);
         try {
-            getModule().execute();
+            toExecute(cmd);
         } finally {
             realCommand();
         }
@@ -30,7 +33,7 @@ public class BaseService extends PluginTarget implements Service {
         cmd.setDomain(domain);
         cmd.setName(name);
         try {
-            getModule().execute();
+            toExecute(cmd);
         } finally {
             realCommand();
         }
@@ -43,24 +46,18 @@ public class BaseService extends PluginTarget implements Service {
         cmd.setOperate(operate);
         cmd.setName(name);
         try {
-            getModule().execute();
+            toExecute(cmd);
         } finally {
             realCommand();
         }
         return cmd;
     }
 
-    protected PluginCommand toService() {
-        Plugin gate = (Plugin) getGate();
-        gate.service();
-        return getPluginCommand();
-    }
-
     protected PluginCommand toService(String name) {
         PluginCommand cmd = mockPluginCommand();
         cmd.setName(name);
         try {
-            toService();
+            getModule().execute();
         } finally {
             realCommand();
         }
@@ -72,7 +69,7 @@ public class BaseService extends PluginTarget implements Service {
         cmd.setName(name);
         cmd.setOperate(operate);
         try {
-            toService();
+            getModule().execute();
         } finally {
             realCommand();
         }
@@ -80,8 +77,7 @@ public class BaseService extends PluginTarget implements Service {
     }
 
     protected PluginCommand toPersist() {
-        Plugin gate = (Plugin) getGate();
-        gate.persist();
+        ((Plugin) getGate()).persist();
         return getPluginCommand();
     }
 
@@ -106,6 +102,9 @@ public class BaseService extends PluginTarget implements Service {
             realCommand();
         }
         return cmd;
+    }
+
+    public void destroy() {
     }
 
 }

@@ -12,7 +12,7 @@ public class EmployDAO {
     public void list() {
         StubCommand cmd = new StubCommand();
         cmd.setTable(new EmployModel());
-        test.search(cmd);
+        test.select(cmd);
         Object[] result = (Object[]) cmd.getResult();
         System.out.println(Reflects.toListMap(result));
     }

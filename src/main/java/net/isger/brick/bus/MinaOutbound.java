@@ -40,7 +40,7 @@ public class MinaOutbound extends MinaEndpoint {
                 session = future.getSession();
                 if (session != null) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.info("Connected to {}://{}", protocol, address);
+                        LOG.info("Connected to [{}://{}]", protocol, address);
                     }
                     this.session = session;
                     break;

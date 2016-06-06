@@ -13,6 +13,10 @@ public class EmployService extends BaseService {
 
     private boolean isCreate;
 
+    public void initial() {
+        toPersist(); /* 初始化 */
+    }
+
     public void test() {
         PluginCommand cmd = PluginCommand.getAction();
         String test = (String) cmd.getParameter("test");

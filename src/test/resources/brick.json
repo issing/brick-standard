@@ -60,7 +60,7 @@
             }
         },
         testMyBatis : {
-            class : "net.isger.brick.stub.MyBatisStub",
+            class : "net.isger.brick.stub.MybatisStub",
             parameters : {
                 driverName : "org.h2.Driver",
                 url : "jdbc:h2:mem:activiti;DB_CLOSE_DELAY=1000",

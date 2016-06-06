@@ -1,10 +1,12 @@
 package net.isger.brick.stub;
 
-import org.logicalcobwebs.proxool.ProxoolFacade;
-
 import net.isger.brick.stub.dialect.Dialect;
+import net.isger.brick.stub.dialect.Dialects;
 import net.isger.util.Helpers;
 import net.isger.util.Strings;
+import net.isger.util.anno.Ignore;
+
+import org.logicalcobwebs.proxool.ProxoolFacade;
 
 public class PoolStub extends SqlStub {
 
@@ -12,19 +14,12 @@ public class PoolStub extends SqlStub {
 
     private String name;
 
-    protected Dialect getDialect(String driverName) {
-        return Dialects.getDialect(super.getDriverName());
-    }
-
-    protected String getDialectName() {
-        String dialectName = super.getDialectName();
-        if (dialectName == null) {
-            Dialect dialect = Dialects.getDialect(super.getDriverName());
-            if (dialect != null) {
-                dialectName = dialect.getName();
-            }
+    protected Dialect getDialect() {
+        Dialect dialect = super.getDialect();
+        if (dialect == null) {
+            dialect = Dialects.getDialect(super.getDriverName());
         }
-        return dialectName;
+        return dialect;
     }
 
     protected String getDriverName() {
@@ -39,6 +34,7 @@ public class PoolStub extends SqlStub {
                 + super.getUrl();
     }
 
+    @Ignore
     public void destroy() {
         if (DRIVER_NAME.equals(getDriverName())) {
             ProxoolFacade.shutdown(0);

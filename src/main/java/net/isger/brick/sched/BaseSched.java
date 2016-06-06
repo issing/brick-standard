@@ -26,7 +26,7 @@ public class BaseSched extends AbstractSched {
 
     /** 容器 */
     @Ignore(mode = Mode.INCLUDE)
-    @Alias(Constants.BRICK_CONTAINER)
+    @Alias(Constants.SYSTEM)
     private Container container;
 
     /** 处理器 */

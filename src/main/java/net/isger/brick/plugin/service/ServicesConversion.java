@@ -2,8 +2,8 @@ package net.isger.brick.plugin.service;
 
 import net.isger.brick.util.ScanLoader;
 import net.isger.util.Strings;
-import net.isger.util.reflect.Conversion;
-import net.isger.util.scanner.ScanFilter;
+import net.isger.util.reflect.conversion.Conversion;
+import net.isger.util.scan.ScanFilter;
 
 public class ServicesConversion extends ScanLoader implements Conversion {
 

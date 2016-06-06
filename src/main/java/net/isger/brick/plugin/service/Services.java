@@ -1,11 +1,13 @@
 package net.isger.brick.plugin.service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import net.isger.util.Helpers;
+import net.isger.util.Strings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,22 +47,43 @@ public class Services {
     }
 
     public void add(Service service) {
-        put(null, service);
+        put("", service);
     }
 
     public void put(String name, Service service) {
-        name = Helpers.getAliasName(service.getClass(), "Service$", name)
-                .toLowerCase();
-        if (LOG.isDebugEnabled()) {
-            LOG.info("Binding [{}] service [{}]", name, service);
+        int index = name.lastIndexOf(".");
+        String key;
+        if (index++ > 0) {
+            key = name.substring(0, index);
+            name = name.substring(index);
+        } else {
+            key = "";
         }
-        service = services.put(name, service);
+        key += getName(service.getClass(), name);
+        if (LOG.isDebugEnabled()) {
+            LOG.info("Binding [{}] service [{}]", key, service);
+        }
+        service = services.put(key, service);
         if (service != null) {
-            LOG.warn("(!) Discard [{}] service [{}]", name, service);
+            LOG.warn("(!) Discard [{}] service [{}]", key, service);
         }
     }
 
     public Service get(String name) {
         return services.get(name);
     }
+
+    public Map<String, Service> gets() {
+        return Collections.unmodifiableMap(services);
+    }
+
+    public static final String getName(Class<? extends Service> clazz) {
+        return getName(clazz, "");
+    }
+
+    public static final String getName(Class<? extends Service> clazz,
+            String name) {
+        return Helpers.getAliasName(clazz, "Service$", Strings.toLower(name));
+    }
+
 }

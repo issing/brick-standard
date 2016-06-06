@@ -5,8 +5,8 @@ import java.util.Map;
 import net.isger.brick.util.ScanLoader;
 import net.isger.util.Reflects;
 import net.isger.util.Strings;
-import net.isger.util.reflect.Conversion;
-import net.isger.util.scanner.ScanFilter;
+import net.isger.util.reflect.conversion.Conversion;
+import net.isger.util.scan.ScanFilter;
 
 public class PersistsConversion extends ScanLoader implements Conversion {
 

@@ -1,11 +1,13 @@
 package net.isger.brick.plugin.persist;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import net.isger.util.Helpers;
+import net.isger.util.Strings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,22 +47,43 @@ public final class Persists {
     }
 
     public void add(Persist persist) {
-        put(null, persist);
+        put("", persist);
     }
 
     public void put(String name, Persist persist) {
-        name = Helpers.getAliasName(persist.getClass(), "Persist$", name)
-                .toLowerCase();
-        if (LOG.isDebugEnabled()) {
-            LOG.info("Binding [{}] persist [{}]", name, persist);
+        int index = name.lastIndexOf(".");
+        String key;
+        if (index++ > 0) {
+            key = name.substring(0, index);
+            name = name.substring(index);
+        } else {
+            key = "";
         }
-        persist = persists.put(name, persist);
+        key += getName(persist.getClass(), name);
+        if (LOG.isDebugEnabled()) {
+            LOG.info("Binding [{}] persist [{}]", key, persist);
+        }
+        persist = persists.put(key, persist);
         if (persist != null) {
-            LOG.warn("(!) Discard [{}] service [{}]", name, persist);
+            LOG.warn("(!) Discard [{}] service [{}]", key, persist);
         }
     }
 
     public Persist get(String name) {
         return persists.get(name);
     }
+
+    public Map<String, Persist> gets() {
+        return Collections.unmodifiableMap(persists);
+    }
+
+    public static final String getName(Class<? extends Persist> clazz) {
+        return getName(clazz, "");
+    }
+
+    public static final String getName(Class<? extends Persist> clazz,
+            String name) {
+        return Helpers.getAliasName(clazz, "Persist$", Strings.toLower(name));
+    }
+
 }

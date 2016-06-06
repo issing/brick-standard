@@ -11,6 +11,9 @@ public class BasePersist extends PluginTarget implements Persist {
     @Ignore(mode = Mode.INCLUDE)
     private String stub;
 
+    public void initial() {
+    }
+
     protected final StubCommand getStubCommand() {
         StubCommand cmd = StubCommand.cast(super.getCommand());
         if (stub != null) {
@@ -42,6 +45,9 @@ public class BasePersist extends PluginTarget implements Persist {
             realCommand();
         }
         return cmd;
+    }
+
+    public void destroy() {
     }
 
 }

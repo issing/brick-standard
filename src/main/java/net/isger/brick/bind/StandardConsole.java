@@ -1,14 +1,13 @@
 package net.isger.brick.bind;
 
 import net.isger.brick.StandardConstants;
+import net.isger.brick.auth.ShiroModule;
 import net.isger.brick.core.Console;
 import net.isger.brick.core.Module;
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.plugin.PluginModule;
 import net.isger.brick.sched.SchedCommand;
 import net.isger.brick.sched.SchedModule;
-import net.isger.brick.stub.StubCommand;
-import net.isger.brick.stub.StubModule;
 import net.isger.util.anno.Ignore;
 
 /**
@@ -18,30 +17,30 @@ import net.isger.util.anno.Ignore;
  * 
  */
 @Ignore
-public class StandardConsole extends Console {
+public class StandardConsole extends Console implements StandardConstants {
 
     protected void loadKernel() {
         /* 默认内核 */
-        // 调度模块
-        Module module = getModule(StandardConstants.MOD_SCHED);
+        // 认证模块
+        Module module = getModule(MOD_AUTH);
         if (module == null) {
-            addModule(StandardConstants.MOD_SCHED, new SchedModule());
+            addModule(MOD_AUTH, new ShiroModule());
         }
-        addCommand(StandardConstants.MOD_SCHED, SchedCommand.class);
         // 插件模块
-        module = getModule(StandardConstants.MOD_PLUGIN);
+        module = getModule(MOD_PLUGIN);
         if (module == null) {
-            addModule(StandardConstants.MOD_PLUGIN, new PluginModule());
+            addModule(MOD_PLUGIN, new PluginModule());
         }
-        addCommand(StandardConstants.MOD_PLUGIN, PluginCommand.class);
-        // 存根模块
-        module = getModule(StandardConstants.MOD_STUB);
+        addDependencies(MOD_PLUGIN, MOD_STUB);
+        addCommand(MOD_PLUGIN, PluginCommand.class);
+        // 调度模块
+        module = getModule(MOD_SCHED);
         if (module == null) {
-            addModule(StandardConstants.MOD_STUB, new StubModule());
+            addModule(MOD_SCHED, new SchedModule());
         }
-        addCommand(StandardConstants.MOD_STUB, StubCommand.class);
+        addDependencies(MOD_SCHED, MOD_PLUGIN);
+        addCommand(MOD_SCHED, SchedCommand.class);
         /* 配置内核 */
         super.loadKernel();
     }
-
 }

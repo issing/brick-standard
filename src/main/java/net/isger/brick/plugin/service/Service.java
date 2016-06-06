@@ -1,7 +1,8 @@
 package net.isger.brick.plugin.service;
 
+import net.isger.util.Manageable;
 import net.isger.util.Operator;
 
-public interface Service extends Operator {
+public interface Service extends Operator, Manageable {
 
 }

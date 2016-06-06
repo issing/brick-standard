@@ -7,7 +7,7 @@
   <entry key="delete"><![CDATA[
     delete from t_employ where id = ?
   ]]></entry>
-  <entry key="search"><![CDATA[
+  <entry key="select"><![CDATA[
     select * from t_employ where name = ?
   ]]></entry>
 </properties>

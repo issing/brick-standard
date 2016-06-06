@@ -36,7 +36,7 @@ public abstract class AbstractPlugin extends BaseGate implements Plugin {
     }
 
     protected String getName() {
-        return PluginCommand.getAction().getName().toLowerCase();
+        return PluginCommand.getAction().getName();
     }
 
 }

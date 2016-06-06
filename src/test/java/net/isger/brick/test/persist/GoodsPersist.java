@@ -8,7 +8,7 @@ public interface GoodsPersist extends Persist {
 
     public void create();
 
-    public void search(@Alias("name") String name, @Alias("page") Page page);
+    public void select(@Alias("name") String name, @Alias("page") Page page);
 
     public void insert(@Alias("id") String id, @Alias("name") String name);
 

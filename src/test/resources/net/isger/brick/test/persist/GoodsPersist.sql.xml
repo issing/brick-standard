@@ -2,15 +2,15 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
   <entry key="create"><![CDATA[
-    create table t_goods (
-      id varchar(20) not null,
-      name varchar(50) not null
+    CREATE TABLE t_goods (
+      id VARCHAR(20) NOT NULL,
+      name VARCHAR(50) NOT NULL
     )
   ]]></entry>
   <entry key="insert"><![CDATA[
-    insert into t_goods(id, name) values(?, ?)
+    INSERT INTO t_goods(id, name) VALUES(?, ?)
   ]]></entry>
-  <entry key="search"><![CDATA[
-    select * from t_goods where name like ?
+  <entry key="select"><![CDATA[
+    SELECT * FROM t_goods WHERE name LIKE ?
   ]]></entry>
 </properties>

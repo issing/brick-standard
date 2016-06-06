@@ -15,7 +15,7 @@ public class GoodsService extends BaseService {
         toPersist();
     }
 
-    public void search() {
+    public void select() {
         Object[] result = (Object[]) toPersist().getResult();
         System.out.println(Reflects.toListMap(result));
         System.out.println("Search Count: " + result[2]);
