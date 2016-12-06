@@ -4,14 +4,14 @@ import java.util.List;
 
 import net.isger.brick.Constants;
 import net.isger.brick.core.Console;
+import net.isger.brick.plugin.PluginConstants;
+import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
+import net.isger.brick.stub.model.Model;
 import net.isger.util.Reflects;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Ignore
 public class CommonPersist extends PersistProxy {
@@ -32,11 +32,9 @@ public class CommonPersist extends PersistProxy {
 
     public static final String REMOVE = "remove";
 
-    public static final String PARAM_OPCODE = "persist.opcode";
+    public static final String OPCODE_NORMAL = "normal";
 
-    public static final String PARAM_VALUE = "persist.value";
-
-    private static final Logger LOG;
+    public static final String OPCODE_BATCH = "batch";
 
     protected final Object table;
 
@@ -46,10 +44,6 @@ public class CommonPersist extends PersistProxy {
     @Ignore(mode = Mode.INCLUDE)
     @Alias(Constants.SYSTEM)
     private Console console;
-
-    static {
-        LOG = LoggerFactory.getLogger(CommonPersist.class);
-    }
 
     public CommonPersist(Object table) {
         this.table = table;
@@ -63,22 +57,20 @@ public class CommonPersist extends PersistProxy {
         if (this.reset) {
             try {
                 cmd.setOperate(REMOVE);
-                toStub();
+                PluginHelper.toConsole(cmd);
             } catch (Exception e) {
-                LOG.warn(e.getMessage(), e.getCause());
             }
         } else {
             try {
                 cmd.setOperate(SELECT);
                 cmd.setCondition(EXISTS);
-                toStub();
+                PluginHelper.toConsole(cmd);
                 return;
             } catch (Exception e) {
-                LOG.warn(e.getMessage(), e.getCause());
             }
         }
         cmd.setOperate(CREATE);
-        toStub();
+        PluginHelper.toConsole(cmd);
         boostrap();
     }
 
@@ -112,9 +104,9 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public void insert(@Alias(PARAM_OPCODE) Object opcode,
-            @Alias(PARAM_VALUE) Object... values) {
-        toStub();
+    public void insert(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object... values) {
+        PluginHelper.toConsole(getStubCommand());
     }
 
     //
@@ -144,9 +136,9 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public Object single(@Alias(PARAM_OPCODE) Object opcode,
-            @Alias(PARAM_VALUE) Object... values) {
-        Object result = toStub().getResult();
+    public Object single(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object... values) {
+        Object result = PluginHelper.toConsole(getStubCommand());
         if (result instanceof Object[]) {
             Class<?> clazz = Reflects.getClass(this.table);
             if (clazz == null) {
@@ -173,12 +165,12 @@ public class CommonPersist extends PersistProxy {
      * @param values
      */
     @Ignore(mode = Mode.INCLUDE)
-    public Object select(@Alias(PARAM_OPCODE) Object opcode,
-            @Alias(PARAM_VALUE) Object... values) {
-        Object result = toStub().getResult();
+    public Object select(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object... values) {
+        Object result = PluginHelper.toConsole(getStubCommand());
         if (result instanceof Object[]) {
             Class<?> clazz = Reflects.getClass(this.table);
-            if (clazz == null) {
+            if (clazz == null || Model.class.isAssignableFrom(clazz)) {
                 result = Reflects.toListMap((Object[]) result);
             } else {
                 result = Reflects.toList(clazz, (Object[]) result);

@@ -114,8 +114,7 @@ public class MybatisStub extends PoolStub {
         }
     }
 
-    public void insert() {
-        StubCommand cmd = StubCommand.getAction();
+    public void insert(StubCommand cmd) {
         Object table = cmd.getTable();
         if (table instanceof Class) {
             Object[] condition = getCondition(cmd, 2);
@@ -136,12 +135,11 @@ public class MybatisStub extends PoolStub {
             }
             cmd.setResult(result);
         } else {
-            super.insert();
+            super.insert(cmd);
         }
     }
 
-    public void select() {
-        StubCommand cmd = StubCommand.getAction();
+    public void select(StubCommand cmd) {
         Object table = cmd.getTable();
         if (table instanceof Class) {
             Object[] condition = getCondition(cmd, 2);
@@ -162,7 +160,7 @@ public class MybatisStub extends PoolStub {
             }
             cmd.setResult(result);
         } else {
-            super.select();
+            super.select(cmd);
         }
     }
 

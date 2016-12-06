@@ -1,12 +1,14 @@
 package net.isger.brick.plugin.persist;
 
-import net.isger.brick.plugin.PluginTarget;
+import net.isger.brick.plugin.PluginCommand;
+import net.isger.brick.plugin.PluginOperator;
 import net.isger.brick.stub.StubCommand;
+import net.isger.util.Strings;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
 
 @Ignore
-public class BasePersist extends PluginTarget implements Persist {
+public class BasePersist extends PluginOperator implements Persist {
 
     @Ignore(mode = Mode.INCLUDE)
     private String stub;
@@ -15,36 +17,20 @@ public class BasePersist extends PluginTarget implements Persist {
     }
 
     protected final StubCommand getStubCommand() {
-        StubCommand cmd = StubCommand.cast(super.getCommand());
-        if (stub != null) {
+        StubCommand cmd = StubCommand.getAction();
+        if (Strings.isNotEmpty(stub)) {
             cmd.setDomain(stub);
         }
         return cmd;
     }
 
     protected final StubCommand mockStubCommand() {
-        return StubCommand.cast(super.mockCommand());
+        StubCommand.mockAction();
+        return getStubCommand();
     }
 
-    protected final StubCommand realStubCommand() {
-        return StubCommand.cast(super.realCommand());
-    }
-
-    protected StubCommand toStub() {
-        StubCommand cmd = getStubCommand();
-        getConsole().execute(cmd);
-        return cmd;
-    }
-
-    protected StubCommand toStub(String operate) {
-        StubCommand cmd = mockStubCommand();
-        cmd.setOperate(operate);
-        try {
-            getConsole().execute(cmd);
-        } finally {
-            realCommand();
-        }
-        return cmd;
+    public void persist(PluginCommand cmd) {
+        super.operate(cmd);
     }
 
     public void destroy() {

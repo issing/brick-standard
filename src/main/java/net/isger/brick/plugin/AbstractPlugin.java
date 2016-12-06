@@ -1,6 +1,7 @@
 package net.isger.brick.plugin;
 
 import net.isger.brick.core.BaseGate;
+import net.isger.brick.core.GateCommand;
 import net.isger.brick.plugin.persist.Persist;
 import net.isger.brick.plugin.service.Service;
 import net.isger.util.Strings;
@@ -11,32 +12,21 @@ public abstract class AbstractPlugin extends BaseGate implements Plugin {
 
     protected abstract Persist getPersist(String name);
 
-    public void operate() {
-        if (Strings.isEmpty(getName())) {
-            super.operate();
+    public void operate(GateCommand cmd) {
+        PluginCommand pcmd = (PluginCommand) cmd;
+        if (Strings.isEmpty(pcmd.getName())) {
+            super.operate(cmd);
         } else {
-            service();
+            service(pcmd);
         }
     }
 
-    public void service() {
-        service(getName());
+    public void service(PluginCommand cmd) {
+        getService(cmd.getName()).service(cmd);
     }
 
-    protected void service(String name) {
-        getService(name).operate();
-    }
-
-    public void persist() {
-        persist(getName());
-    }
-
-    protected void persist(String name) {
-        getPersist(name).operate();
-    }
-
-    protected String getName() {
-        return PluginCommand.getAction().getName();
+    public void persist(PluginCommand cmd) {
+        getPersist(cmd.getName()).persist(cmd);
     }
 
 }

@@ -1,5 +1,6 @@
 package net.isger.brick.plugin.service;
 
+import net.isger.brick.plugin.PluginHelper;
 import net.isger.util.anno.Ignore;
 
 @Ignore
@@ -16,7 +17,6 @@ public class CommonService extends BaseService {
     public static final String PARAM_VALUE = "service.value";
 
     public void initial() {
-        toPersist();
+        PluginHelper.toPersist();
     }
-
 }

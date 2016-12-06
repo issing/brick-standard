@@ -13,12 +13,12 @@ public interface Plugin extends Gate {
      * 服务
      * 
      */
-    public void service();
+    public void service(PluginCommand cmd);
 
     /**
      * 持久
      * 
      */
-    public void persist();
+    public void persist(PluginCommand cmd);
 
 }

@@ -2,7 +2,6 @@ package net.isger.brick.auth;
 
 import net.isger.brick.Constants;
 import net.isger.brick.core.Console;
-import net.isger.brick.plugin.PluginCommand;
 import net.isger.util.Helpers;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
@@ -16,33 +15,18 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * 授权域
+ * 
+ * @author issing
+ *
+ */
 public class ShiroRealm extends AuthorizingRealm {
-
-    private static final String AUTH = "auth";
-
-    private static final String PARAM_PRINCIPALS = "principals";
-
-    private static final Logger LOG;
 
     @Ignore(mode = Mode.INCLUDE)
     @Alias(Constants.SYSTEM)
     private Console console;
-
-    private String plugin;
-
-    private String operate;
-
-    static {
-        LOG = LoggerFactory.getLogger(ShiroRealm.class);
-    }
-
-    public ShiroRealm() {
-        this.plugin = AUTH;
-        this.operate = AUTH;
-    }
 
     public String getName() {
         return Helpers.getAliasName(this.getClass(), "Realm$");
@@ -54,22 +38,20 @@ public class ShiroRealm extends AuthorizingRealm {
 
     protected AuthorizationInfo doGetAuthorizationInfo(
             PrincipalCollection principals) {
-        AuthCommand cmd = new AuthCommand();
-        PluginCommand tokenCmd = PluginCommand.newAction();
-        tokenCmd.setName(plugin);
-        tokenCmd.setOperate(operate);
-        tokenCmd.setParameter(PARAM_PRINCIPALS, principals.asList());
-        cmd.setToken(tokenCmd);
+        AuthCommand cmd = AuthCommand.newAction();
+        cmd.setOperate(AuthCommand.OPERATE_AUTH);
+        cmd.setToken(principals.asList());
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
         try {
             console.execute(cmd);
-            AuthInfo ai = (AuthInfo) tokenCmd.getResult();
+            AuthInfo ai = (AuthInfo) cmd.getResult();
             if (ai != null) {
                 info.addRoles(ai.getRoles());
                 info.addStringPermissions(ai.getPermissions());
             }
         } catch (Exception e) {
-            LOG.warn(e.getMessage(), e.getCause());
+            throw new IllegalStateException(
+                    "Failure to get authorization info", e);
         }
         return info;
     }

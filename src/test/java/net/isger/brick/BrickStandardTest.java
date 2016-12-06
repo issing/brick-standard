@@ -58,6 +58,7 @@ public class BrickStandardTest extends TestCase {
         BusCommand cmd = new BusCommand();
         cmd.setEndpoint("client");
         cmd.setOperate(BusCommand.OPERATE_SEND);
+        cmd.setParameter("test", "hello");
         cmd.setPayload(cmd);
         MANAGER.getConsole().execute(cmd);
     }
@@ -134,7 +135,7 @@ public class BrickStandardTest extends TestCase {
         cmd.setTable(employ);
         cmd.setOperate(StubCommand.OPERATE_INSERT);
         MANAGER.getConsole().execute(cmd); // 方式一（使用bean或model实例）
-        cmd.setTable(employ.getModelName());
+        cmd.setTable(employ.modelName());
         cmd.setCondition(Helpers.wrap("id", "name", "input_time"),
                 Helpers.wrap("1", "first", date));
         MANAGER.getConsole().execute(cmd); // 方式二（使用字符串描述）
@@ -158,7 +159,7 @@ public class BrickStandardTest extends TestCase {
             }
         });
         MANAGER.getConsole().execute(cmd); // 方式二（集合）
-        cmd.setTable(employ.getModelName());
+        cmd.setTable(employ.modelName());
         cmd.setCondition(
                 Helpers.wrap("id", "name", "input_time"),
                 Helpers.group(Helpers.wraps("9", "nine", date),
@@ -173,7 +174,7 @@ public class BrickStandardTest extends TestCase {
         cmd.setTable(employ);
         cmd.setOperate(StubCommand.OPERATE_DELETE);
         MANAGER.getConsole().execute(cmd); // 方式一
-        cmd.setTable(employ.getModelName());
+        cmd.setTable(employ.modelName());
         cmd.setCondition(Helpers.wrap(Helpers.wrap("name"),
                 Helpers.wrap("first")));
         MANAGER.getConsole().execute(cmd); // 方式二
@@ -199,7 +200,7 @@ public class BrickStandardTest extends TestCase {
     private void testUpdate(StubCommand cmd) {
         // 单次
         EmployModel employ = new EmployModel("0", "zero");
-        cmd.setTable(employ.getModelName());
+        cmd.setTable(employ.modelName());
         cmd.setOperate(StubCommand.OPERATE_UPDATE);
         cmd.setCondition((Object) new Object[][] {
                 { new String[] { "id", "name" }, new Object[] { "1", "first" } },

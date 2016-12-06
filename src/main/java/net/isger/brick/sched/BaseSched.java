@@ -3,7 +3,7 @@ package net.isger.brick.sched;
 import java.util.Map;
 
 import net.isger.brick.Constants;
-import net.isger.brick.core.BaseHandler;
+import net.isger.brick.core.CommandHandler;
 import net.isger.brick.core.Handler;
 import net.isger.brick.inject.Container;
 import net.isger.brick.plugin.PluginCommand;
@@ -39,7 +39,7 @@ public class BaseSched extends AbstractSched {
     public void initial() {
         super.initial();
         if (handler == null) {
-            handler = new BaseHandler();
+            handler = new CommandHandler();
         }
         container.inject(handler);
         command = new PluginCommand();

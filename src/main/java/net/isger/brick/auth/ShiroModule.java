@@ -20,17 +20,13 @@ public class ShiroModule extends AuthModule {
     @Ignore
     public void initial() {
         super.initial();
-        setRealm: {
-            if (security == null) {
-                security = new DefaultSecurityManager();
-                if (realm == null) {
-                    realm = container.inject(new ShiroRealm());
-                }
-            } else if (realm == null) {
-                break setRealm;
-            }
-            security.setRealm(realm);
+        if (security == null) {
+            security = new DefaultSecurityManager();
         }
+        if (realm == null) {
+            realm = container.inject(new ShiroRealm());
+        }
+        security.setRealm(realm);
         SecurityUtils.setSecurityManager(security);
     }
 

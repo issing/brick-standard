@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.isger.brick.plugin.PluginCommand;
+import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
 import net.isger.util.Helpers;
 import net.isger.util.Reflects;
@@ -37,16 +39,19 @@ public class PersistProxy extends BasePersist {
 
     }
 
-    public Object operate(String operate) {
-        StubCommand cmd = this.getStubCommand();
+    public void persist(PluginCommand cmd) {
+        String operate = cmd.getOperate();
+        StubCommand scmd = this.getStubCommand();
         Class<?> targetClass = Reflects.getClass(target);
-        cmd.setTable(targetClass);
+        if (scmd.getTable() == null) {
+            scmd.setTable(targetClass);
+        }
         String persist = getPluginCommand().getPersist();
         BoundMethod boundMethod;
         if ((boundMethod = Reflects.getBoundMethod(targetClass, persist)) == null
                 && (boundMethod = Reflects.getBoundMethod(targetClass, operate)) == null) {
-            cmd.setCondition(Strings.empty(
-                    (String) cmd.getParameter(PARAM_IDENTITY), operate));
+            scmd.setCondition(Strings.empty(
+                    (String) scmd.getParameter(PARAM_IDENTITY), operate));
         } else {
             Method method = boundMethod.getMethod();
             Class<?>[] paramTypes = method.getParameterTypes();
@@ -60,24 +65,24 @@ public class PersistProxy extends BasePersist {
                 } else {
                     paramName = operate + i;
                 }
-                params.add(cmd.getParameter(paramName));
+                params.add(scmd.getParameter(paramName));
             }
-            cmd.setCondition(Strings.empty(
-                    (String) cmd.getParameter(PARAM_IDENTITY), operate), params
-                    .toArray());
+            scmd.setCondition(Strings.empty(
+                    (String) scmd.getParameter(PARAM_IDENTITY), operate),
+                    params.toArray());
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {
                     Object result = method.invoke(target, params.toArray());
                     if (!Void.TYPE.equals(method.getReturnType())) {
-                        cmd.setResult(result);
+                        scmd.setResult(result);
                     }
-                    return result;
+                    return;
                 } catch (Exception e) {
                     throw new IllegalStateException(e.getMessage(),
                             e.getCause());
                 }
             }
         }
-        return toStub().getResult();
+        PluginHelper.toConsole(scmd);
     }
 }

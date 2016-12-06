@@ -11,10 +11,6 @@ public class PluginCommand extends GateCommand {
 
     public static final String KEY_PERSIST = "plugin-persist";
 
-    public static final String OPERATE_INITIAL = "initial";
-
-    public static final String OPERATE_DESTROY = "destroy";
-
     public PluginCommand() {
     }
 
@@ -69,7 +65,7 @@ public class PluginCommand extends GateCommand {
 
     public void setPersist(String name, Class<?> resultType,
             Class<?>... argTypes) {
-        setPersist(BoundMethod.makeMethodName(name, resultType, argTypes));
+        setPersist(BoundMethod.makeMethodDesc(name, resultType, argTypes));
     }
 
 }

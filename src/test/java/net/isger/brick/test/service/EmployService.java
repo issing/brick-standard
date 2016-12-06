@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.isger.brick.plugin.PluginCommand;
+import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.plugin.service.BaseService;
 import net.isger.brick.sched.BaseSched;
 import net.isger.brick.sched.SchedCommand;
@@ -14,24 +15,24 @@ public class EmployService extends BaseService {
     private boolean isCreate;
 
     public void initial() {
-        toPersist(); /* 初始化 */
+        PluginHelper.toPersist(); /* 初始化 */
     }
 
     public void test() {
         PluginCommand cmd = PluginCommand.getAction();
         String test = (String) cmd.getParameter("test");
         System.out.println("EmployService.test(): " + test);
-        toPersist();
+        PluginHelper.toPersist();
         if ("stub".equalsIgnoreCase(test)) {
             System.out.println("EmployService.test() result: "
                     + Reflects.toListMap((Object[]) cmd.getResult()));
         }
         cmd.setName("chain");
         cmd.setOperate("test");
-        toPersist();
+        PluginHelper.toPersist();
         System.out.println("EmployService.test() result: " + cmd.getResult());
         cmd.setOperate("chain");
-        toPersist();
+        PluginHelper.toPersist();
         System.out.println("EmployService.test() result: " + cmd.getResult());
     }
 
@@ -51,7 +52,7 @@ public class EmployService extends BaseService {
         params.put(BaseSched.PARAM_NAME, "dynamic");
         config.put("parameters", params);
         cmd.setParameter("employ.dynamic", config);
-        toExecute(cmd);
+        PluginHelper.toConsole(cmd);
     }
 
 }

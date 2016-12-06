@@ -1,5 +1,7 @@
 package net.isger.brick.bus;
 
+import java.net.SocketAddress;
+
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoService;
 import org.apache.mina.core.session.IoSession;
@@ -18,17 +20,13 @@ public class MinaOutbound extends MinaEndpoint {
         LOG = LoggerFactory.getLogger(MinaOutbound.class);
     }
 
-    protected void open() {
-        super.open();
-        status = Status.ACTIVATED;
-    }
-
     protected IoService createService() {
         return new NioSocketConnector();
     }
 
     protected IoSession getSession() {
         IoSession session = this.session;
+        SocketAddress address = getAddress();
         if (session == null || session.isClosing()) {
             ConnectFuture future = ((SocketConnector) getService())
                     .connect(address);
@@ -40,7 +38,8 @@ public class MinaOutbound extends MinaEndpoint {
                 session = future.getSession();
                 if (session != null) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.info("Connected to [{}://{}]", protocol, address);
+                        LOG.info("Connected to [{}://{}]", getProtocolName(),
+                                address);
                     }
                     this.session = session;
                     break;
@@ -62,7 +61,6 @@ public class MinaOutbound extends MinaEndpoint {
             session.close(true);
             session = null;
         }
-        status = Status.DEACTIVATED;
         super.close();
     }
 }

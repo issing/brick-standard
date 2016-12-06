@@ -3,45 +3,62 @@ package net.isger.brick.auth;
 import net.isger.brick.core.BaseCommand;
 import net.isger.brick.core.Command;
 
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.session.UnknownSessionException;
 import org.apache.shiro.subject.Subject;
 
 public class ShiroAuth extends BaseAuth {
 
     protected Object save(String identity, Object token) {
-        Subject subject;
-        try {
-            subject = SecurityUtils.getSubject();
-            subject.login(makeToken(token));
-        } catch (Exception e) {
-            return null;
+        Subject subject = (Subject) super.check(identity, token);
+        if (subject != null) {
+            try {
+                subject.logout();
+            } catch (Exception e) {
+            }
         }
-        return super.save(identity, subject);
+        subject = (new Subject.Builder()).buildSubject();
+        try {
+            subject.login(makeToken(token));
+            super.save(identity, subject);
+        } catch (Exception e) {
+            token = null;
+        }
+        return token;
     }
 
     private AuthenticationToken makeToken(Object token) {
         if (token instanceof AuthenticationToken) {
             return (AuthenticationToken) token;
+        } else if (token instanceof ShiroToken) {
+            return (ShiroToken) token;
         } else if (token instanceof AuthToken) {
-            return new ShiroToken((AuthToken) token);
+            return new ShiroToken((AuthToken<?>) token);
         }
         return null;
     }
 
-    protected Object auth(String identity, Object token) {
+    protected Object check(String identity, Object token) {
+        Subject subject = (Subject) super.check(identity, token);
+        boolean result;
         try {
-            Subject subject = (Subject) super.auth(identity, token);
-            String permission;
-            if (token instanceof Command) {
-                permission = BaseCommand.cast((Command) token).getPermission();
-            } else {
-                permission = token.toString();
+            if (result = subject != null) {
+                String permission;
+                if (token instanceof Command) {
+                    permission = BaseCommand.cast((Command) token)
+                            .getPermission();
+                } else {
+                    permission = token.toString();
+                }
+                subject.checkPermission(permission);
             }
-            subject.checkPermission(permission);
-        } catch (Exception e) {
-            return false;
+        } catch (UnknownSessionException e) {
+            super.save(identity, null);
+            result = false;
+        } catch (AuthorizationException e) {
+            throw new AuthException("Failure to check permission", e);
         }
-        return true;
+        return result;
     }
 }

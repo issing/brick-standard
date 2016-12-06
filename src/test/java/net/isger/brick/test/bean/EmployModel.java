@@ -2,10 +2,10 @@ package net.isger.brick.test.bean;
 
 import java.util.Date;
 
-import net.isger.brick.stub.model.BaseModel;
+import net.isger.brick.stub.model.Model;
 import net.isger.util.Helpers;
 
-public class EmployModel extends BaseModel {
+public class EmployModel extends Model {
 
     private static final String FIELD_ID = "id";
 
@@ -24,37 +24,37 @@ public class EmployModel extends BaseModel {
         if (args != null) {
             switch (args.length) {
             case 3:
-                setFieldValue(FIELD_INPUT_TIME, args[2]);
+                metaValue(FIELD_INPUT_TIME, args[2]);
             case 2:
-                setFieldValue(FIELD_NAME, args[1]);
+                metaValue(FIELD_NAME, args[1]);
             case 1:
-                setFieldValue(FIELD_ID, args[0]);
+                metaValue(FIELD_ID, args[0]);
             }
         }
     }
 
     public String getId() {
-        return (String) getFieldValue(FIELD_ID);
+        return (String) metaValue(FIELD_ID);
     }
 
     public void setId(String id) {
-        setFieldValue(FIELD_ID, id);
+        metaValue(FIELD_ID, id);
     }
 
     public String getName() {
-        return (String) getFieldValue(FIELD_NAME);
+        return (String) metaValue(FIELD_NAME);
     }
 
     public void setName(String name) {
-        setFieldValue(FIELD_NAME, name);
+        metaValue(FIELD_NAME, name);
     }
 
     public Date getInputTime() {
-        return (Date) getFieldValue(FIELD_INPUT_TIME);
+        return (Date) metaValue(FIELD_INPUT_TIME);
     }
 
     public void setInputTime(Date inputTime) {
-        setFieldValue(FIELD_INPUT_TIME, inputTime);
+        metaValue(FIELD_INPUT_TIME, inputTime);
     }
 
 }

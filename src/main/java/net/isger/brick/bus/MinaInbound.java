@@ -1,11 +1,9 @@
 package net.isger.brick.bus;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 
 import org.apache.mina.core.service.IoService;
-import org.apache.mina.core.service.IoServiceListener;
-import org.apache.mina.core.session.IdleStatus;
-import org.apache.mina.core.session.IoSession;
 import org.apache.mina.transport.socket.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.slf4j.Logger;
@@ -23,9 +21,10 @@ public class MinaInbound extends MinaEndpoint {
         super.open();
         SocketAcceptor acceptor = (SocketAcceptor) getService();
         /* 绑定服务端口 */
+        SocketAddress address = getAddress();
         try {
             if (LOG.isDebugEnabled()) {
-                LOG.info("Listening [{}://{}]", this.protocol, address);
+                LOG.info("Listening [{}://{}]", getProtocolName(), address);
             }
             acceptor.bind(address);
         } catch (IOException e) {
@@ -35,27 +34,7 @@ public class MinaInbound extends MinaEndpoint {
     }
 
     protected IoService createService() {
-        IoService service = new NioSocketAcceptor();
-        service.addListener(new IoServiceListener() {
-            public void serviceActivated(IoService service) throws Exception {
-                status = Status.ACTIVATED;
-            }
-
-            public void serviceIdle(IoService service, IdleStatus idleStatus)
-                    throws Exception {
-            }
-
-            public void serviceDeactivated(IoService service) throws Exception {
-                status = Status.DEACTIVATED;
-            }
-
-            public void sessionCreated(IoSession session) throws Exception {
-            }
-
-            public void sessionDestroyed(IoSession session) throws Exception {
-            }
-        });
-        return service;
+        return new NioSocketAcceptor();
     }
 
     protected void close() {

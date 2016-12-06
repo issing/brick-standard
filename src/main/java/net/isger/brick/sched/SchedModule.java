@@ -22,7 +22,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
@@ -79,9 +78,8 @@ public class SchedModule extends GateModule {
     }
 
     @SuppressWarnings("unchecked")
-    public void create() {
-        GateCommand cmd = GateCommand.getAction();
-        super.create();
+    public void create(GateCommand cmd) {
+        super.create(cmd);
         if (!cmd.getTransient()) {
             Map<String, Sched> scheds = (Map<String, Sched>) cmd.getResult();
             Sched sched;
@@ -119,8 +117,7 @@ public class SchedModule extends GateModule {
         }
     }
 
-    public void resume() {
-        GateCommand cmd = GateCommand.getAction();
+    public void resume(GateCommand cmd) {
         Sched sched;
         for (Entry<String, Object> entry : cmd.getParameter().entrySet()) {
             if ((sched = (Sched) getGate(entry.getKey())) != null) {
@@ -140,9 +137,8 @@ public class SchedModule extends GateModule {
     }
 
     @SuppressWarnings("unchecked")
-    public void remove() {
-        GateCommand cmd = GateCommand.getAction();
-        super.remove();
+    public void remove(GateCommand cmd) {
+        super.remove(cmd);
         Map<String, Sched> scheds = (Map<String, Sched>) cmd.getResult();
         for (Sched sched : scheds.values()) {
             try {
@@ -197,7 +193,7 @@ public class SchedModule extends GateModule {
     public void destroy() {
         try {
             scheduler.shutdown(true);
-        } catch (SchedulerException e) {
+        } catch (Exception e) {
         }
         super.destroy();
     }
