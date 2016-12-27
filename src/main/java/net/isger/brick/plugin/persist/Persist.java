@@ -1,7 +1,6 @@
 package net.isger.brick.plugin.persist;
 
-import net.isger.brick.plugin.PluginCommand;
-import net.isger.util.Manageable;
+import net.isger.brick.stub.StubCommand;
 
 /**
  * 持久接口
@@ -9,13 +8,13 @@ import net.isger.util.Manageable;
  * @author issing
  *
  */
-public interface Persist extends Manageable {
+public interface Persist {
 
     /**
      * 持久入口
      * 
      * @param cmd
      */
-    public void persist(PluginCommand cmd);
+    public void persist(StubCommand cmd);
 
 }

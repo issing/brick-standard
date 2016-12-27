@@ -13,8 +13,7 @@ public class EmployPersist extends CommonPersist {
         super(new EmployModel());
     }
 
-    public void test() {
-        StubCommand cmd = getStubCommand();
+    public void test(StubCommand cmd) {
         String test = (String) cmd.getParameter("test");
         System.out.println("EmployPersist.test(): " + test);
         if ("stub".equalsIgnoreCase(test)) {

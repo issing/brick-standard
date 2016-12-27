@@ -4,6 +4,7 @@ import net.isger.brick.core.BaseGate;
 import net.isger.brick.core.GateCommand;
 import net.isger.brick.plugin.persist.Persist;
 import net.isger.brick.plugin.service.Service;
+import net.isger.brick.stub.StubCommand;
 import net.isger.util.Strings;
 
 public abstract class AbstractPlugin extends BaseGate implements Plugin {
@@ -26,7 +27,7 @@ public abstract class AbstractPlugin extends BaseGate implements Plugin {
     }
 
     public void persist(PluginCommand cmd) {
-        getPersist(cmd.getName()).persist(cmd);
+        getPersist(cmd.getName()).persist(StubCommand.cast(cmd));
     }
 
 }

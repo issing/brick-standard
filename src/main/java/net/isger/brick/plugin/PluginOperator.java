@@ -10,6 +10,13 @@ public class PluginOperator extends CommandOperator {
     @Ignore(mode = Mode.INCLUDE)
     private String plugin;
 
+    public PluginOperator() {
+    }
+
+    public PluginOperator(Object source) {
+        super(source);
+    }
+
     protected final PluginCommand getPluginCommand() {
         PluginCommand cmd = PluginCommand.getAction();
         if (Strings.isNotEmpty(plugin)) {

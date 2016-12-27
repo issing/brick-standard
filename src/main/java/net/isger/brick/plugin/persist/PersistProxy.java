@@ -39,42 +39,45 @@ public class PersistProxy extends BasePersist {
 
     }
 
-    public void persist(PluginCommand cmd) {
+    public void persist(StubCommand cmd) {
         String operate = cmd.getOperate();
-        StubCommand scmd = this.getStubCommand();
         Class<?> targetClass = Reflects.getClass(target);
-        if (scmd.getTable() == null) {
-            scmd.setTable(targetClass);
+        if (cmd.getTable() == null) {
+            cmd.setTable(targetClass);
         }
-        String persist = getPluginCommand().getPersist();
+        String persist = PluginCommand.getPersist(cmd);
         BoundMethod boundMethod;
         if ((boundMethod = Reflects.getBoundMethod(targetClass, persist)) == null
                 && (boundMethod = Reflects.getBoundMethod(targetClass, operate)) == null) {
-            scmd.setCondition(Strings.empty(
-                    (String) scmd.getParameter(PARAM_IDENTITY), operate));
+            cmd.setCondition(Strings.empty(
+                    (String) cmd.getParameter(PARAM_IDENTITY), operate));
         } else {
             Method method = boundMethod.getMethod();
             Class<?>[] paramTypes = method.getParameterTypes();
             Annotation[][] annos = method.getParameterAnnotations();
             List<Object> params = new ArrayList<Object>();
             int size = paramTypes.length;
-            String paramName;
-            for (int i = 0; i < size; i++) {
-                if (Helpers.hasAliasName(annos[i])) {
-                    paramName = Helpers.getAliasName(annos[i]);
-                } else {
-                    paramName = operate + i;
+            if (size == 1 && paramTypes[0].isInstance(cmd)) {
+                params.add(cmd);
+            } else {
+                String paramName;
+                for (int i = 0; i < size; i++) {
+                    if (Helpers.hasAliasName(annos[i])) {
+                        paramName = Helpers.getAliasName(annos[i]);
+                    } else {
+                        paramName = operate + i;
+                    }
+                    params.add(cmd.getParameter(paramName));
                 }
-                params.add(scmd.getParameter(paramName));
             }
-            scmd.setCondition(Strings.empty(
-                    (String) scmd.getParameter(PARAM_IDENTITY), operate),
-                    params.toArray());
+            cmd.setCondition(Strings.empty(
+                    (String) cmd.getParameter(PARAM_IDENTITY), operate), params
+                    .toArray());
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {
                     Object result = method.invoke(target, params.toArray());
                     if (!Void.TYPE.equals(method.getReturnType())) {
-                        scmd.setResult(result);
+                        cmd.setResult(result);
                     }
                     return;
                 } catch (Exception e) {
@@ -83,6 +86,6 @@ public class PersistProxy extends BasePersist {
                 }
             }
         }
-        PluginHelper.toConsole(scmd);
+        PluginHelper.toConsole(cmd);
     }
 }

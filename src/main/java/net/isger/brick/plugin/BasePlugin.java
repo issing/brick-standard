@@ -18,9 +18,8 @@ public class BasePlugin extends AbstractPlugin {
         persists = new Persists();
     }
 
-    public void initial() {
+    public void initial(PluginCommand cmd) {
         super.initial();
-        PluginCommand cmd;
         Service service;
         for (Persist persist : persists.gets().values()) {
             container.inject(persist);
@@ -30,7 +29,8 @@ public class BasePlugin extends AbstractPlugin {
             cmd.setName(entry.getKey());
             service = container.inject(entry.getValue());
             try {
-                service.initial();
+                service.service(cmd);
+            } catch (Exception e) {
             } finally {
                 PluginCommand.realAction();
             }
@@ -45,11 +45,13 @@ public class BasePlugin extends AbstractPlugin {
         return persists.get(name);
     }
 
-    public void destroy() {
-        PluginCommand cmd = PluginCommand.getAction();
+    public void destroy(PluginCommand cmd) {
         for (Entry<String, Service> entry : services.gets().entrySet()) {
             cmd.setName(entry.getKey());
-            entry.getValue().destroy();
+            try {
+                entry.getValue().service(cmd);
+            } catch (Exception e) {
+            }
         }
         super.destroy();
     }

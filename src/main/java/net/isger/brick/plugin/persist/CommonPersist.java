@@ -50,9 +50,7 @@ public class CommonPersist extends PersistProxy {
     }
 
     @Ignore(mode = Mode.INCLUDE)
-    public void initial() {
-        super.initial();
-        StubCommand cmd = getStubCommand();
+    public void initial(StubCommand cmd) {
         cmd.setTable(table);
         if (this.reset) {
             try {
@@ -71,13 +69,13 @@ public class CommonPersist extends PersistProxy {
         }
         cmd.setOperate(CREATE);
         PluginHelper.toConsole(cmd);
-        boostrap();
+        boostrap(cmd);
     }
 
     /**
      * 引导
      */
-    protected void boostrap() {
+    protected void boostrap(StubCommand cmd) {
     }
 
     // /**
@@ -106,7 +104,7 @@ public class CommonPersist extends PersistProxy {
     @Ignore(mode = Mode.INCLUDE)
     public void insert(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
             @Alias(PluginConstants.PARAM_VALUE) Object... values) {
-        PluginHelper.toConsole(getStubCommand());
+        PluginHelper.toConsole(StubCommand.getAction());
     }
 
     //
@@ -138,7 +136,7 @@ public class CommonPersist extends PersistProxy {
     @Ignore(mode = Mode.INCLUDE)
     public Object single(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
             @Alias(PluginConstants.PARAM_VALUE) Object... values) {
-        Object result = PluginHelper.toConsole(getStubCommand());
+        Object result = PluginHelper.toConsole(StubCommand.getAction());
         if (result instanceof Object[]) {
             Class<?> clazz = Reflects.getClass(this.table);
             if (clazz == null) {
@@ -167,7 +165,7 @@ public class CommonPersist extends PersistProxy {
     @Ignore(mode = Mode.INCLUDE)
     public Object select(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
             @Alias(PluginConstants.PARAM_VALUE) Object... values) {
-        Object result = PluginHelper.toConsole(getStubCommand());
+        Object result = PluginHelper.toConsole(StubCommand.getAction());
         if (result instanceof Object[]) {
             Class<?> clazz = Reflects.getClass(this.table);
             if (clazz == null || Model.class.isAssignableFrom(clazz)) {

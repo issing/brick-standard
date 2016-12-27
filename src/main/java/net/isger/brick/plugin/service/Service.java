@@ -1,7 +1,6 @@
 package net.isger.brick.plugin.service;
 
 import net.isger.brick.plugin.PluginCommand;
-import net.isger.util.Manageable;
 
 /**
  * 服务
@@ -9,7 +8,7 @@ import net.isger.util.Manageable;
  * @author issing
  *
  */
-public interface Service extends Manageable {
+public interface Service {
 
     /**
      * 服务入口
