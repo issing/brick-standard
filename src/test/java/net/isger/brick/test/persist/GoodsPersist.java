@@ -1,8 +1,8 @@
 package net.isger.brick.test.persist;
 
 import net.isger.brick.plugin.persist.Persist;
-import net.isger.brick.stub.dialect.Page;
 import net.isger.util.anno.Alias;
+import net.isger.util.sql.Page;
 
 public interface GoodsPersist extends Persist {
 

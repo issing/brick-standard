@@ -8,4 +8,6 @@ public interface PluginConstants extends Constants {
 
     public static final String PARAM_VALUE = "common.value";
 
+    public static final String PARAM_PAGE = "common.page";
+
 }

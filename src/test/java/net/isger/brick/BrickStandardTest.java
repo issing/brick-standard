@@ -17,10 +17,10 @@ import net.isger.brick.inject.ContainerProvider;
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.stub.Stub;
 import net.isger.brick.stub.StubCommand;
-import net.isger.brick.stub.dialect.Page;
 import net.isger.brick.test.bean.Employ;
 import net.isger.brick.test.bean.EmployModel;
 import net.isger.util.Helpers;
+import net.isger.util.sql.Page;
 
 public class BrickStandardTest extends TestCase {
 

@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.isger.brick.core.Command;
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
@@ -39,7 +40,7 @@ public class PersistProxy extends BasePersist {
 
     }
 
-    public void persist(StubCommand cmd) {
+    public final void persist(StubCommand cmd) {
         String operate = cmd.getOperate();
         Class<?> targetClass = Reflects.getClass(target);
         if (cmd.getTable() == null) {
@@ -55,23 +56,27 @@ public class PersistProxy extends BasePersist {
             Method method = boundMethod.getMethod();
             Class<?>[] paramTypes = method.getParameterTypes();
             Annotation[][] annos = method.getParameterAnnotations();
+            List<Object> values = new ArrayList<Object>();
             List<Object> params = new ArrayList<Object>();
             int size = paramTypes.length;
-            if (size == 1 && paramTypes[0].isInstance(cmd)) {
-                params.add(cmd);
-            } else {
-                String paramName;
-                for (int i = 0; i < size; i++) {
-                    if (Helpers.hasAliasName(annos[i])) {
-                        paramName = Helpers.getAliasName(annos[i]);
+            String paramName;
+            Object paramValue;
+            for (int i = 0; i < size; i++) {
+                if (paramTypes[i].isInstance(cmd)
+                        && Command.class.isAssignableFrom(paramTypes[i])) {
+                    paramValue = cmd;
+                } else {
+                    paramName = Helpers.getAliasName(annos[i]);
+                    if (Strings.isEmpty(paramName)) {
+                        paramValue = cmd.getParameter(operate + i);
                     } else {
-                        paramName = operate + i;
+                        values.add(paramValue = cmd.getParameter(paramName));
                     }
-                    params.add(cmd.getParameter(paramName));
                 }
+                params.add(paramValue);
             }
             cmd.setCondition(Strings.empty(
-                    (String) cmd.getParameter(PARAM_IDENTITY), operate), params
+                    (String) cmd.getParameter(PARAM_IDENTITY), operate), values
                     .toArray());
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {

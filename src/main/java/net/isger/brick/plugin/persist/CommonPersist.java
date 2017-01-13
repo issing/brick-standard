@@ -12,6 +12,7 @@ import net.isger.util.Reflects;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
+import net.isger.util.sql.Page;
 
 @Ignore
 public class CommonPersist extends PersistProxy {
@@ -78,22 +79,6 @@ public class CommonPersist extends PersistProxy {
     protected void boostrap(StubCommand cmd) {
     }
 
-    // /**
-    // * 新增
-    // *
-    // * @param value
-    // * @return
-    // */
-    // public <T> int insert(@Alias(PARAM_VALUE) T value);
-    //
-    // /**
-    // * 新增
-    // *
-    // * @param values
-    // * @return
-    // */
-    // public <T> int insert(T[] values);
-
     /**
      * 新增
      *
@@ -102,30 +87,40 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public void insert(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object... values) {
-        PluginHelper.toConsole(StubCommand.getAction());
+    public void insert(StubCommand cmd,
+            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+        PluginHelper.toConsole(cmd);
     }
 
-    //
-    // /**
-    // * 修改
-    // *
-    // * @param value
-    // * @return
-    // */
-    // public <T> int update(@Alias(PARAM_VALUE) T value);
-    //
-    // /**
-    // * 修改
-    // *
-    // * @param opcode
-    // * @param values
-    // * @return
-    // */
-    // public int update(@Alias(PARAM_OPCODE) Object opcode,
-    // @Alias(PARAM_VALUE) Object... values);
-    //
+    /**
+     * 删除
+     *
+     * @param opcode
+     * @param values
+     * @return
+     */
+    @Ignore(mode = Mode.INCLUDE)
+    public void delete(StubCommand cmd,
+            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+        PluginHelper.toConsole(cmd);
+    }
+
+    /**
+     * 修改
+     *
+     * @param opcode
+     * @param values
+     * @return
+     */
+    @Ignore(mode = Mode.INCLUDE)
+    public void update(StubCommand cmd,
+            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+        PluginHelper.toConsole(cmd);
+    }
+
     /**
      * 查询
      *
@@ -134,9 +129,10 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public Object single(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object... values) {
-        Object result = PluginHelper.toConsole(StubCommand.getAction());
+    public Object single(StubCommand cmd,
+            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+        Object result = PluginHelper.toConsole(cmd);
         if (result instanceof Object[]) {
             Class<?> clazz = Reflects.getClass(this.table);
             if (clazz == null) {
@@ -163,20 +159,29 @@ public class CommonPersist extends PersistProxy {
      * @param values
      */
     @Ignore(mode = Mode.INCLUDE)
-    public Object select(@Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object... values) {
-        Object result = PluginHelper.toConsole(StubCommand.getAction());
+    public Object select(StubCommand cmd,
+            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object[] values,
+            @Alias(PluginConstants.PARAM_PAGE) Page page) {
+        Object result = PluginHelper.toConsole(cmd);
         if (result instanceof Object[]) {
+            Object[] gridMode = (Object[]) result;
+            Object value = gridMode[gridMode.length - 1];
+            if (value instanceof Integer) {
+                page.setTotal((Integer) value);
+            }
             Class<?> clazz = Reflects.getClass(this.table);
             if (clazz == null || Model.class.isAssignableFrom(clazz)) {
-                result = Reflects.toListMap((Object[]) result);
+                result = Reflects.toListMap(gridMode);
             } else {
-                result = Reflects.toList(clazz, (Object[]) result);
+                result = Reflects.toList(clazz, gridMode);
             }
+        }
+        if (page != null) {
+            result = new Object[] { result, page };
         }
         return result;
     }
-
     // /**
     // * 统计
     // *
@@ -185,6 +190,6 @@ public class CommonPersist extends PersistProxy {
     // * @return
     // */
     // public int count(@Alias(PARAM_OPCODE) Object opcode,
-    // @Alias(PARAM_VALUE) Object... values);
+    // @Alias(PARAM_VALUE) Object[] values);
 
 }

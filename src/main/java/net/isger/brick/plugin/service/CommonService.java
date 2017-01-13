@@ -22,4 +22,5 @@ public class CommonService extends BaseService {
     public void initial(PluginCommand cmd) {
         PluginHelper.toPersist(cmd);
     }
+
 }
