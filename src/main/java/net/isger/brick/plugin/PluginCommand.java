@@ -47,12 +47,20 @@ public class PluginCommand extends GateCommand {
         return getName();
     }
 
+    public static String getName(BaseCommand cmd) {
+        return cmd.getHeader(KEY_NAME);
+    }
+
+    public static void setName(BaseCommand cmd, String name) {
+        cmd.setHeader(KEY_NAME, name);
+    }
+
     public String getName() {
-        return getHeader(KEY_NAME);
+        return getName(this);
     }
 
     public void setName(String name) {
-        setHeader(KEY_NAME, name);
+        setName(this, name);
     }
 
     public static String getPersist(BaseCommand cmd) {

@@ -14,7 +14,7 @@ public class EmployDAO {
         cmd.setTable(new EmployModel());
         test.select(cmd);
         Object[] result = (Object[]) cmd.getResult();
-        System.out.println(Reflects.toListMap(result));
+        System.out.println(Reflects.toList(result));
     }
 
 }

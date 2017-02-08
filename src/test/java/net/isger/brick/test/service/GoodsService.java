@@ -1,6 +1,5 @@
 package net.isger.brick.test.service;
 
-import net.isger.brick.core.BaseCommand;
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.plugin.service.BaseService;
@@ -12,19 +11,15 @@ public class GoodsService extends BaseService {
 
     public void insert(PluginCommand cmd) {
         if (!isCreate) {
-            try {
-                PluginHelper.toPersist(mockPluginCommand(), "create");
-            } finally {
-                BaseCommand.realAction();
-            }
+            PluginHelper.toPersist(new PluginCommand(cmd), "create");
             isCreate = true;
         }
-        PluginHelper.toPersist();
+        PluginHelper.toPersist(cmd);
     }
 
     public void select(PluginCommand cmd) {
         Object[] result = (Object[]) PluginHelper.toPersist(cmd);
-        System.out.println(Reflects.toListMap(result));
+        System.out.println(Reflects.toList(result));
         System.out.println("Search Count: " + result[2]);
     }
 

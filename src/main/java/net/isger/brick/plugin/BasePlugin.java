@@ -30,7 +30,6 @@ public class BasePlugin extends AbstractPlugin {
             service = container.inject(entry.getValue());
             try {
                 service.service(cmd);
-            } catch (Exception e) {
             } finally {
                 PluginCommand.realAction();
             }

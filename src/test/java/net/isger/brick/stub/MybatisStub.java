@@ -118,7 +118,7 @@ public class MybatisStub extends PoolStub {
         Object table = cmd.getTable();
         if (table instanceof Class) {
             Object[] condition = getCondition(cmd, 2);
-            final Connection conn = getConnection();
+            final Connection conn = getConnection(cmd);
             Object result;
             SqlSession session = null;
             try {
@@ -143,7 +143,7 @@ public class MybatisStub extends PoolStub {
         Object table = cmd.getTable();
         if (table instanceof Class) {
             Object[] condition = getCondition(cmd, 2);
-            final Connection conn = getConnection();
+            final Connection conn = getConnection(cmd);
             Object result;
             SqlSession session = null;
             try {

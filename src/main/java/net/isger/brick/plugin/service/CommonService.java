@@ -23,4 +23,24 @@ public class CommonService extends BaseService {
         PluginHelper.toPersist(cmd);
     }
 
+    @Ignore(mode = Mode.INCLUDE)
+    public void insert(PluginCommand cmd) {
+        PluginHelper.toPersist(cmd);
+    }
+
+    @Ignore(mode = Mode.INCLUDE)
+    public void delete(PluginCommand cmd) {
+        PluginHelper.toPersist(cmd);
+    }
+
+    @Ignore(mode = Mode.INCLUDE)
+    public void update(PluginCommand cmd) {
+        PluginHelper.toPersist(cmd);
+    }
+
+    @Ignore(mode = Mode.INCLUDE)
+    public void select(PluginCommand cmd) {
+        PluginHelper.toPersist(cmd);
+    }
+
 }

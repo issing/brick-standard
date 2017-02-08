@@ -46,30 +46,39 @@ public class CommonPersist extends PersistProxy {
     @Alias(Constants.SYSTEM)
     private Console console;
 
+    private boolean create;
+
     public CommonPersist(Object table) {
+        this(table, true);
+    }
+
+    public CommonPersist(Object table, boolean create) {
         this.table = table;
+        this.create = create;
     }
 
     @Ignore(mode = Mode.INCLUDE)
-    public void initial(StubCommand cmd) {
+    public final void initial(StubCommand cmd) {
         cmd.setTable(table);
-        if (this.reset) {
-            try {
-                cmd.setOperate(REMOVE);
-                PluginHelper.toConsole(cmd);
-            } catch (Exception e) {
+        if (create) {
+            if (this.reset) {
+                try {
+                    cmd.setOperate(REMOVE);
+                    PluginHelper.toConsole(cmd);
+                } catch (Exception e) {
+                }
+            } else {
+                try {
+                    cmd.setOperate(SELECT);
+                    cmd.setCondition(EXISTS);
+                    PluginHelper.toConsole(cmd);
+                    return;
+                } catch (Exception e) {
+                }
             }
-        } else {
-            try {
-                cmd.setOperate(SELECT);
-                cmd.setCondition(EXISTS);
-                PluginHelper.toConsole(cmd);
-                return;
-            } catch (Exception e) {
-            }
+            cmd.setOperate(CREATE);
+            PluginHelper.toConsole(cmd);
         }
-        cmd.setOperate(CREATE);
-        PluginHelper.toConsole(cmd);
         boostrap(cmd);
     }
 
@@ -136,7 +145,7 @@ public class CommonPersist extends PersistProxy {
         if (result instanceof Object[]) {
             Class<?> clazz = Reflects.getClass(this.table);
             if (clazz == null) {
-                result = Reflects.toListMap((Object[]) result);
+                result = Reflects.toList((Object[]) result);
             } else {
                 result = Reflects.toList(clazz, (Object[]) result);
             }
@@ -172,7 +181,7 @@ public class CommonPersist extends PersistProxy {
             }
             Class<?> clazz = Reflects.getClass(this.table);
             if (clazz == null || Model.class.isAssignableFrom(clazz)) {
-                result = Reflects.toListMap(gridMode);
+                result = Reflects.toList(gridMode);
             } else {
                 result = Reflects.toList(clazz, gridMode);
             }

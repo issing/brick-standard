@@ -108,7 +108,7 @@ public class BrickStandardTest extends TestCase {
         // MyBatis
         cmd.setDomain("testMyBatis");
         cmd.setTable(Employ.class);
-        cmd.setCondition(null, new Object[] { "f%" });
+        cmd.setCondition("select", new Object[] { "f%" });
         cmd.setOperate(StubCommand.OPERATE_SELECT);
         MANAGER.getConsole().execute(cmd);
         System.out.println(cmd.getResult());
