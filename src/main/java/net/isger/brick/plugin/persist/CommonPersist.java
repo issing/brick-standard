@@ -1,6 +1,7 @@
 package net.isger.brick.plugin.persist;
 
 import java.util.List;
+import java.util.Map;
 
 import net.isger.brick.Constants;
 import net.isger.brick.core.Console;
@@ -140,11 +141,14 @@ public class CommonPersist extends PersistProxy {
     @Ignore(mode = Mode.INCLUDE)
     public Object single(StubCommand cmd,
             @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+            @Alias(PluginConstants.PARAM_VALUE) Object[] values,
+            @Alias(PluginConstants.PARAM_BEAN) Object bean) {
         Object result = PluginHelper.toConsole(cmd);
         if (result instanceof Object[]) {
-            Class<?> clazz = Reflects.getClass(this.table);
-            if (clazz == null) {
+            Class<?> clazz = Reflects
+                    .getClass(bean == null ? this.table : bean);
+            if (clazz == null || Model.class.isAssignableFrom(clazz)
+                    || Map.class.isAssignableFrom(clazz)) {
                 result = Reflects.toList((Object[]) result);
             } else {
                 result = Reflects.toList(clazz, (Object[]) result);
@@ -171,16 +175,19 @@ public class CommonPersist extends PersistProxy {
     public Object select(StubCommand cmd,
             @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
             @Alias(PluginConstants.PARAM_VALUE) Object[] values,
+            @Alias(PluginConstants.PARAM_BEAN) Object bean,
             @Alias(PluginConstants.PARAM_PAGE) Page page) {
         Object result = PluginHelper.toConsole(cmd);
         if (result instanceof Object[]) {
             Object[] gridMode = (Object[]) result;
             Object value = gridMode[gridMode.length - 1];
-            if (value instanceof Integer) {
-                page.setTotal((Integer) value);
+            if (value instanceof Number) {
+                page.setTotal(((Number) value).intValue());
             }
-            Class<?> clazz = Reflects.getClass(this.table);
-            if (clazz == null || Model.class.isAssignableFrom(clazz)) {
+            Class<?> clazz = Reflects
+                    .getClass(bean == null ? this.table : bean);
+            if (clazz == null || Model.class.isAssignableFrom(clazz)
+                    || Map.class.isAssignableFrom(clazz)) {
                 result = Reflects.toList(gridMode);
             } else {
                 result = Reflects.toList(clazz, gridMode);

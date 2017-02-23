@@ -3,6 +3,7 @@ package net.isger.brick.plugin;
 import net.isger.brick.core.CoreHelper;
 import net.isger.brick.plugin.service.Service;
 import net.isger.brick.plugin.service.Services;
+import net.isger.util.Strings;
 
 /**
  * 插件助手
@@ -47,7 +48,9 @@ public class PluginHelper extends CoreHelper {
      * @return
      */
     public static Object toService(PluginCommand cmd, String name) {
-        cmd.setName(name);
+        if (Strings.isNotEmpty(name)) {
+            cmd.setName(name);
+        }
         return toService(cmd);
     }
 

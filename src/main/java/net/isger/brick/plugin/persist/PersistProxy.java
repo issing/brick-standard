@@ -42,6 +42,7 @@ public class PersistProxy extends BasePersist {
 
     public final void persist(StubCommand cmd) {
         String operate = cmd.getOperate();
+        Object table = cmd.getTable();
         Class<?> targetClass = Reflects.getClass(target);
         if (cmd.getTable() == null) {
             cmd.setTable(targetClass);
@@ -92,5 +93,6 @@ public class PersistProxy extends BasePersist {
             }
         }
         PluginHelper.toConsole(cmd);
+        cmd.setTable(table);
     }
 }
