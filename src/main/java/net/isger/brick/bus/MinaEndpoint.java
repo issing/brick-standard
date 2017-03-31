@@ -63,8 +63,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         final ProtocolDecoder decoder = new CumulativeProtocolDecoder() {
             protected boolean doDecode(IoSession session, IoBuffer in,
                     ProtocolDecoderOutput out) throws Exception {
-                Object message = getProtocol().getDecoder().decode(
-                        in.asInputStream());
+                Object message = getProtocol().getDecoder().decode(in.array());
                 boolean result = message != null;
                 if (result) {
                     out.write(message);

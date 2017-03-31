@@ -1,5 +1,6 @@
 package net.isger.brick.plugin.persist;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -8,6 +9,8 @@ import net.isger.brick.core.Console;
 import net.isger.brick.plugin.PluginConstants;
 import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
+import net.isger.brick.stub.model.Meta;
+import net.isger.brick.stub.model.Metas;
 import net.isger.brick.stub.model.Model;
 import net.isger.util.Reflects;
 import net.isger.util.anno.Alias;
@@ -60,27 +63,44 @@ public class CommonPersist extends PersistProxy {
 
     @Ignore(mode = Mode.INCLUDE)
     public final void initial(StubCommand cmd) {
-        cmd.setTable(table);
         if (create) {
-            if (this.reset) {
-                try {
-                    cmd.setOperate(REMOVE);
-                    PluginHelper.toConsole(cmd);
-                } catch (Exception e) {
-                }
-            } else {
-                try {
-                    cmd.setOperate(SELECT);
-                    cmd.setCondition(EXISTS);
-                    PluginHelper.toConsole(cmd);
-                    return;
-                } catch (Exception e) {
-                }
+            if (toInitial(cmd, table)) {
+                boostrap(cmd);
             }
-            cmd.setOperate(CREATE);
-            PluginHelper.toConsole(cmd);
         }
-        boostrap(cmd);
+    }
+
+    private boolean toInitial(StubCommand cmd, Object table) {
+        cmd.setTable(table);
+        if (this.reset) {
+            try {
+                cmd.setOperate(REMOVE);
+                PluginHelper.toConsole(cmd);
+            } catch (Exception e) {
+            }
+        } else {
+            try {
+                cmd.setOperate(SELECT);
+                cmd.setCondition(EXISTS);
+                PluginHelper.toConsole(cmd);
+                return false;
+            } catch (Exception e) {
+                // try {
+                // cmd.setOperate(REMOVE);
+                // PluginHelper.toConsole(cmd);
+                // } catch (Exception ex) {
+                // }
+            }
+        }
+        cmd.setOperate(CREATE);
+        PluginHelper.toConsole(cmd);
+        Model model;
+        for (Meta meta : Metas.getMetas(table).values()) {
+            if ((model = meta.toModel()) != null) {
+                toInitial((StubCommand) cmd.clone(), model);
+            }
+        }
+        return true;
     }
 
     /**
@@ -136,31 +156,46 @@ public class CommonPersist extends PersistProxy {
      *
      * @param opcode
      * @param values
-     * @return
      */
+    @SuppressWarnings("unchecked")
     @Ignore(mode = Mode.INCLUDE)
-    public Object single(StubCommand cmd,
+    public Object select(StubCommand cmd,
             @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
             @Alias(PluginConstants.PARAM_VALUE) Object[] values,
-            @Alias(PluginConstants.PARAM_BEAN) Object bean) {
+            @Alias(PluginConstants.PARAM_BEAN) Object bean,
+            @Alias(PluginConstants.PARAM_PAGE) Page page) {
         Object result = PluginHelper.toConsole(cmd);
         if (result instanceof Object[]) {
-            Class<?> clazz = Reflects
-                    .getClass(bean == null ? this.table : bean);
-            if (clazz == null || Model.class.isAssignableFrom(clazz)
-                    || Map.class.isAssignableFrom(clazz)) {
-                result = Reflects.toList((Object[]) result);
-            } else {
-                result = Reflects.toList(clazz, (Object[]) result);
+            Object[] grid = (Object[]) result;
+            Object value = grid[grid.length - 1];
+            if (value instanceof Number) {
+                page.setTotal(((Number) value).intValue());
             }
-        } else if (!(result instanceof List)) {
-            return result;
+            if (bean == null) {
+                bean = this.table;
+            }
+            Class<?> clazz = Reflects.getClass(bean);
+            if (clazz == null || Map.class.isAssignableFrom(clazz)
+                    || bean instanceof String) {
+                result = Reflects.toList(grid);
+            } else if (Model.class.isAssignableFrom(clazz)) {
+                result = Reflects.toList(grid);
+                if (!(bean instanceof Class)) {
+                    List<Model> container = new ArrayList<Model>();
+                    Model model;
+                    for (Map<String, Object> row : (List<Map<String, Object>>) result) {
+                        model = ((Model) bean).clone();
+                        model.metaValue(row);
+                        container.add(model);
+                    }
+                    result = container;
+                }
+            } else {
+                result = Reflects.toList(clazz, grid);
+            }
         }
-        List<?> list = (List<?>) result;
-        if (list.size() > 0) {
-            result = list.get(0);
-        } else {
-            result = null;
+        if (page != null) {
+            result = new Object[] { result, page };
         }
         return result;
     }
@@ -170,31 +205,48 @@ public class CommonPersist extends PersistProxy {
      *
      * @param opcode
      * @param values
+     * @return
      */
+    @SuppressWarnings("unchecked")
     @Ignore(mode = Mode.INCLUDE)
-    public Object select(StubCommand cmd,
+    public Object single(StubCommand cmd,
             @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
             @Alias(PluginConstants.PARAM_VALUE) Object[] values,
-            @Alias(PluginConstants.PARAM_BEAN) Object bean,
-            @Alias(PluginConstants.PARAM_PAGE) Page page) {
+            @Alias(PluginConstants.PARAM_BEAN) Object bean) {
         Object result = PluginHelper.toConsole(cmd);
         if (result instanceof Object[]) {
-            Object[] gridMode = (Object[]) result;
-            Object value = gridMode[gridMode.length - 1];
-            if (value instanceof Number) {
-                page.setTotal(((Number) value).intValue());
+            Object[] grid = (Object[]) result;
+            if (bean == null) {
+                bean = this.table;
             }
-            Class<?> clazz = Reflects
-                    .getClass(bean == null ? this.table : bean);
-            if (clazz == null || Model.class.isAssignableFrom(clazz)
-                    || Map.class.isAssignableFrom(clazz)) {
-                result = Reflects.toList(gridMode);
+            Class<?> clazz = Reflects.getClass(bean);
+            if (clazz == null || Map.class.isAssignableFrom(clazz)
+                    || bean instanceof Class || bean instanceof String) {
+                result = Reflects.toList(grid);
+            } else if (Model.class.isAssignableFrom(clazz)) {
+                result = Reflects.toList(grid);
+                if (!(bean instanceof Class)) {
+                    List<Model> container = new ArrayList<Model>();
+                    Model model;
+                    for (Map<String, Object> row : (List<Map<String, Object>>) result) {
+                        model = ((Model) bean).clone();
+                        model.metaValue(row);
+                        container.add(model);
+                        break;
+                    }
+                    result = container;
+                }
             } else {
-                result = Reflects.toList(clazz, gridMode);
+                result = Reflects.toList(clazz, grid);
             }
+        } else if (!(result instanceof List)) {
+            return result;
         }
-        if (page != null) {
-            result = new Object[] { result, page };
+        List<?> list = (List<?>) result;
+        if (list.size() > 0) {
+            result = list.get(0);
+        } else {
+            result = null;
         }
         return result;
     }

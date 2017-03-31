@@ -10,18 +10,17 @@ import org.apache.shiro.subject.Subject;
 
 public class ShiroAuth extends BaseAuth {
 
-    protected Object save(String identity, Object token) {
-        Subject subject = (Subject) super.check(identity, token);
-        if (subject != null) {
-            try {
-                subject.logout();
-            } catch (Exception e) {
-            }
+    protected AuthIdentity createIdentity() {
+        return new ShiroIdentity(new Subject.Builder().buildSubject());
+    }
+
+    protected Object login(AuthIdentity identity, Object token) {
+        Subject subject = (Subject) identity.getToken();
+        if (subject == null) {
+            identity.setToken(subject = new Subject.Builder().buildSubject());
         }
-        subject = (new Subject.Builder()).buildSubject();
         try {
             subject.login(makeToken(token));
-            super.save(identity, subject);
         } catch (Exception e) {
             token = null;
         }
@@ -39,8 +38,9 @@ public class ShiroAuth extends BaseAuth {
         return null;
     }
 
-    protected Object check(String identity, Object token) {
-        Subject subject = (Subject) super.check(identity, token);
+    protected Object check(AuthIdentity identity, Object token) {
+        Subject subject = identity == null ? null : (Subject) identity
+                .getToken();
         boolean result;
         try {
             if (result = subject != null) {
@@ -52,13 +52,23 @@ public class ShiroAuth extends BaseAuth {
                     permission = token.toString();
                 }
                 subject.checkPermission(permission);
+                // 更新会话时间
+                subject.getSession().touch();
             }
         } catch (UnknownSessionException e) {
-            super.save(identity, null);
             result = false;
         } catch (AuthorizationException e) {
             throw new AuthException("Failure to check permission", e);
         }
         return result;
+    }
+
+    protected void logout(AuthIdentity identity) {
+        Subject subject = identity == null ? null : (Subject) identity
+                .getToken();
+        if (subject != null) {
+            subject.logout();
+        }
+        super.logout(identity);
     }
 }

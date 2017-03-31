@@ -49,8 +49,8 @@ public class MinaOutbound extends MinaEndpoint {
         return session;
     }
 
-    public void send() {
-        Object payload = BusCommand.getAction().getPayload();
+    public void send(BusCommand cmd) {
+        Object payload = cmd.getPayload();
         if (payload != null) {
             getSession().write(payload);
         }
