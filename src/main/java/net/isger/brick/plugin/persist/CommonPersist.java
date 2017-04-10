@@ -41,8 +41,6 @@ public class CommonPersist extends PersistProxy {
 
     public static final String OPCODE_BATCH = "batch";
 
-    protected final Object table;
-
     @Ignore(mode = Mode.INCLUDE)
     private boolean reset;
 
@@ -52,25 +50,29 @@ public class CommonPersist extends PersistProxy {
 
     private boolean create;
 
-    public CommonPersist(Object table) {
-        this(table, true);
+    private Object[] tables;
+
+    public CommonPersist(Object... tables) {
+        this(true, tables);
     }
 
-    public CommonPersist(Object table, boolean create) {
-        this.table = table;
+    public CommonPersist(boolean create, Object... tables) {
         this.create = create;
+        this.tables = tables;
     }
 
     @Ignore(mode = Mode.INCLUDE)
     public final void initial(StubCommand cmd) {
-        if (create) {
-            if (toInitial(cmd, table)) {
-                boostrap(cmd);
+        if (create && create(cmd, tables[0])) {
+            int size = tables.length;
+            for (int i = 1; i < size; i++) {
+                create((StubCommand) cmd.clone(), tables[i]);
             }
+            boostrap(cmd);
         }
     }
 
-    private boolean toInitial(StubCommand cmd, Object table) {
+    private boolean create(StubCommand cmd, Object table) {
         cmd.setTable(table);
         if (this.reset) {
             try {
@@ -97,7 +99,7 @@ public class CommonPersist extends PersistProxy {
         Model model;
         for (Meta meta : Metas.getMetas(table).values()) {
             if ((model = meta.toModel()) != null) {
-                toInitial((StubCommand) cmd.clone(), model);
+                create((StubCommand) cmd.clone(), model);
             }
         }
         return true;
@@ -172,7 +174,7 @@ public class CommonPersist extends PersistProxy {
                 page.setTotal(((Number) value).intValue());
             }
             if (bean == null) {
-                bean = this.table;
+                bean = this.tables[0];
             }
             Class<?> clazz = Reflects.getClass(bean);
             if (clazz == null || Map.class.isAssignableFrom(clazz)
@@ -217,7 +219,7 @@ public class CommonPersist extends PersistProxy {
         if (result instanceof Object[]) {
             Object[] grid = (Object[]) result;
             if (bean == null) {
-                bean = this.table;
+                bean = this.tables[0];
             }
             Class<?> clazz = Reflects.getClass(bean);
             if (clazz == null || Map.class.isAssignableFrom(clazz)

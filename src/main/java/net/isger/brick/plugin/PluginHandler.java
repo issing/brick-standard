@@ -49,11 +49,12 @@ public class PluginHandler extends CommandHandler {
      * @return
      */
     public BaseCommand toCommand(PluginCommand cmd) {
+        String domain = getDomain();
         if (Strings.isNotEmpty(domain)) {
             cmd.setDomain(domain);
         }
-        cmd.setName(name);
-        cmd.setOperate(operate);
+        cmd.setName(getName());
+        cmd.setOperate(getOperate());
         return cmd;
     }
 
