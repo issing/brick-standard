@@ -1,10 +1,10 @@
 package net.isger.brick.plugin.service;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import net.isger.util.Helpers;
 import net.isger.util.Strings;
@@ -73,8 +73,8 @@ public class Services {
         return services.get(name);
     }
 
-    public Map<String, Service> gets() {
-        return Collections.unmodifiableMap(services);
+    public Set<Entry<String, Service>> entrySet() {
+        return services.entrySet();
     }
 
     public static final String getName(Class<? extends Service> clazz) {

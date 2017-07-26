@@ -21,10 +21,10 @@ public class BasePlugin extends AbstractPlugin {
     public void initial(PluginCommand cmd) {
         super.initial();
         Service service;
-        for (Persist persist : persists.gets().values()) {
+        for (Persist persist : persists.values()) {
             container.inject(persist);
         }
-        for (Entry<String, Service> entry : services.gets().entrySet()) {
+        for (Entry<String, Service> entry : services.entrySet()) {
             cmd = PluginCommand.mockAction();
             cmd.setName(entry.getKey());
             service = container.inject(entry.getValue());
@@ -45,7 +45,7 @@ public class BasePlugin extends AbstractPlugin {
     }
 
     public void destroy(PluginCommand cmd) {
-        for (Entry<String, Service> entry : services.gets().entrySet()) {
+        for (Entry<String, Service> entry : services.entrySet()) {
             cmd.setName(entry.getKey());
             try {
                 entry.getValue().service(cmd);

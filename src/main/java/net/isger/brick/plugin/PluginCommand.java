@@ -84,4 +84,8 @@ public class PluginCommand extends GateCommand {
         setPersist(BoundMethod.makeMethodDesc(name, resultType, argTypes));
     }
 
+    public PluginCommand clone() {
+        return (PluginCommand) super.clone();
+    }
+
 }

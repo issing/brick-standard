@@ -1,8 +1,9 @@
 package net.isger.brick.test.bus;
 
-import net.isger.brick.core.Handler;
+import net.isger.brick.auth.AuthIdentity;
+import net.isger.brick.bus.IdentityHandler;
 
-public class TestHandler implements Handler {
+public class TestHandler implements IdentityHandler {
 
     private String prefix;
 
@@ -14,6 +15,10 @@ public class TestHandler implements Handler {
             return null;
         }
         return message;
+    }
+
+    public Object handle(AuthIdentity identity, Object message) {
+        return handle(message);
     }
 
 }

@@ -1,73 +1,83 @@
 package net.isger.brick.auth;
 
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.subject.Subject;
+
 import net.isger.brick.core.BaseCommand;
 import net.isger.brick.core.Command;
-
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authz.AuthorizationException;
-import org.apache.shiro.session.UnknownSessionException;
-import org.apache.shiro.subject.Subject;
 
 public class ShiroAuth extends BaseAuth {
 
     protected AuthIdentity createIdentity() {
-        return new ShiroIdentity(new Subject.Builder().buildSubject());
+        return new ShiroIdentity();
     }
 
-    protected Object login(AuthIdentity identity, Object token) {
-        Subject subject = (Subject) identity.getToken();
-        if (subject == null) {
-            identity.setToken(subject = new Subject.Builder().buildSubject());
+    protected AuthToken<?> login(AuthIdentity identity, AuthToken<?> token) {
+        /* 访问令牌 */
+        Object pending = identity.getToken();
+        if (!(pending instanceof ShiroToken
+                || ((pending = makeToken(token)) != null))) {
+            return null;
         }
+        /* 登录操作 */
+        ShiroToken shiroToken = (ShiroToken) pending;
         try {
-            subject.login(makeToken(token));
+            shiroToken.getSubject().login(shiroToken);
         } catch (Exception e) {
-            token = null;
+            shiroToken = null;
         }
-        return token;
+        return super.login(identity, shiroToken);
     }
 
-    private AuthenticationToken makeToken(Object token) {
-        if (token instanceof AuthenticationToken) {
-            return (AuthenticationToken) token;
-        } else if (token instanceof ShiroToken) {
-            return (ShiroToken) token;
-        } else if (token instanceof AuthToken) {
-            return new ShiroToken((AuthToken<?>) token);
+    private ShiroToken makeToken(Object token) {
+        if (!(token instanceof ShiroToken)) {
+            if (token instanceof AuthenticationToken) {
+                token = new ShiroToken(new AuthToken<AuthenticationToken>(
+                        (AuthenticationToken) token) {
+                    public Object getPrincipal() {
+                        return source.getPrincipal();
+                    }
+
+                    public Object getCredentials() {
+                        return source.getCredentials();
+                    }
+                });
+            } else if (token instanceof AuthToken) {
+                token = new ShiroToken((AuthToken<?>) token);
+            } else {
+                token = null;
+            }
         }
-        return null;
+        return (ShiroToken) token;
     }
 
     protected Object check(AuthIdentity identity, Object token) {
-        Subject subject = identity == null ? null : (Subject) identity
-                .getToken();
-        boolean result;
+        Object pending = identity.getToken();
+        if (!(pending instanceof ShiroToken)) {
+            return false;
+        }
+        boolean result = true;
         try {
-            if (result = subject != null) {
-                String permission;
-                if (token instanceof Command) {
-                    permission = BaseCommand.cast((Command) token)
-                            .getPermission();
-                } else {
-                    permission = token.toString();
-                }
-                subject.checkPermission(permission);
-                // 更新会话时间
-                subject.getSession().touch();
+            String permission;
+            if (token instanceof Command) {
+                permission = BaseCommand.cast((Command) token).getPermission();
+            } else {
+                permission = token.toString();
             }
-        } catch (UnknownSessionException e) {
+            Subject subject = ((ShiroToken) pending).getSubject();
+            subject.checkPermission(permission);
+            // 更新会话时间
+            subject.getSession().touch();
+        } catch (Throwable e) {
             result = false;
-        } catch (AuthorizationException e) {
-            throw new AuthException("Failure to check permission", e);
         }
         return result;
     }
 
     protected void logout(AuthIdentity identity) {
-        Subject subject = identity == null ? null : (Subject) identity
-                .getToken();
-        if (subject != null) {
-            subject.logout();
+        Object pending = identity.getToken();
+        if (pending instanceof ShiroToken) {
+            ((ShiroToken) pending).getSubject().logout();
         }
         super.logout(identity);
     }

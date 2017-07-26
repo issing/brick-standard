@@ -82,16 +82,10 @@ public class CommonPersist extends PersistProxy {
             }
         } else {
             try {
-                cmd.setOperate(SELECT);
-                cmd.setCondition(EXISTS);
+                cmd.setOperate(EXISTS);
                 PluginHelper.toConsole(cmd);
                 return false;
             } catch (Exception e) {
-                // try {
-                // cmd.setOperate(REMOVE);
-                // PluginHelper.toConsole(cmd);
-                // } catch (Exception ex) {
-                // }
             }
         }
         cmd.setOperate(CREATE);
@@ -215,6 +209,7 @@ public class CommonPersist extends PersistProxy {
             @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
             @Alias(PluginConstants.PARAM_VALUE) Object[] values,
             @Alias(PluginConstants.PARAM_BEAN) Object bean) {
+        cmd.setParameter(PluginConstants.PARAM_PAGE, null);
         Object result = PluginHelper.toConsole(cmd);
         if (result instanceof Object[]) {
             Object[] grid = (Object[]) result;
@@ -223,7 +218,7 @@ public class CommonPersist extends PersistProxy {
             }
             Class<?> clazz = Reflects.getClass(bean);
             if (clazz == null || Map.class.isAssignableFrom(clazz)
-                    || bean instanceof Class || bean instanceof String) {
+                    || bean instanceof String) {
                 result = Reflects.toList(grid);
             } else if (Model.class.isAssignableFrom(clazz)) {
                 result = Reflects.toList(grid);
@@ -252,6 +247,28 @@ public class CommonPersist extends PersistProxy {
         }
         return result;
     }
+
+    /**
+     * 存在
+     * 
+     * @param cmd
+     * @param opcode
+     * @param values
+     * @return
+     */
+    @Ignore(mode = Mode.INCLUDE)
+    public boolean exists(StubCommand cmd,
+            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
+            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+        boolean result = true;
+        try {
+            PluginHelper.toConsole(cmd);
+        } catch (Exception e) {
+            result = false;
+        }
+        return result;
+    }
+
     // /**
     // * 统计
     // *

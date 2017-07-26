@@ -1,10 +1,11 @@
 package net.isger.brick.plugin.persist;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import net.isger.util.Helpers;
 import net.isger.util.Strings;
@@ -73,8 +74,12 @@ public final class Persists {
         return persists.get(name);
     }
 
-    public Map<String, Persist> gets() {
-        return Collections.unmodifiableMap(persists);
+    public Collection<Persist> values() {
+        return persists.values();
+    }
+
+    public Set<Entry<String, Persist>> entrySet() {
+        return persists.entrySet();
     }
 
     public static final String getName(Class<? extends Persist> clazz) {

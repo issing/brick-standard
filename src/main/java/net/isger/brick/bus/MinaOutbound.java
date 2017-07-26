@@ -1,6 +1,11 @@
 package net.isger.brick.bus;
 
 import java.net.SocketAddress;
+import java.util.HashMap;
+import java.util.Map;
+
+import net.isger.brick.auth.AuthIdentity;
+import net.isger.util.anno.Ignore;
 
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoService;
@@ -14,20 +19,26 @@ public class MinaOutbound extends MinaEndpoint {
 
     private static final Logger LOG;
 
-    private transient IoSession session;
+    @Ignore
+    private Map<String, IoSession> sessions;
 
     static {
         LOG = LoggerFactory.getLogger(MinaOutbound.class);
+    }
+
+    public MinaOutbound() {
+        this.sessions = new HashMap<String, IoSession>();
     }
 
     protected IoService createService() {
         return new NioSocketConnector();
     }
 
-    protected IoSession getSession() {
-        IoSession session = this.session;
-        SocketAddress address = getAddress();
+    protected IoSession getSession(BusCommand cmd) {
+        AuthIdentity identity = cmd.getIdentity();
+        IoSession session = sessions.get(identity.getId());
         if (session == null || session.isClosing()) {
+            SocketAddress address = getAddress();
             ConnectFuture future = ((SocketConnector) getService())
                     .connect(address);
             do {
@@ -41,7 +52,8 @@ public class MinaOutbound extends MinaEndpoint {
                         LOG.info("Connected to [{}://{}]", getProtocolName(),
                                 address);
                     }
-                    this.session = session;
+                    sessions.put(identity.getId(), session);
+                    setIdentity(session, identity);
                     break;
                 }
             } while (!Thread.interrupted());
@@ -52,15 +64,17 @@ public class MinaOutbound extends MinaEndpoint {
     public void send(BusCommand cmd) {
         Object payload = cmd.getPayload();
         if (payload != null) {
-            getSession().write(payload);
+            getSession(cmd).write(payload);
         }
     }
 
     protected void close() {
-        if (session != null && session.isConnected()) {
-            session.close(true);
-            session = null;
+        for (IoSession session : sessions.values()) {
+            if (session != null && session.isConnected()) {
+                session.close(true);
+            }
         }
+        sessions.clear();
         super.close();
     }
 }

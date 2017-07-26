@@ -1,9 +1,14 @@
 package net.isger.brick.plugin;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+
 import net.isger.brick.core.CoreHelper;
 import net.isger.brick.plugin.service.Service;
 import net.isger.brick.plugin.service.Services;
+import net.isger.util.Helpers;
 import net.isger.util.Strings;
+import net.isger.util.reflect.Standin;
 
 /**
  * 插件助手
@@ -173,6 +178,35 @@ public class PluginHelper extends CoreHelper {
             String persist, String opcode, Object value) {
         cmd.setParameter(PluginConstants.PARAM_VALUE, value);
         return toPersist(cmd, operate, persist, opcode);
+    }
+
+    /**
+     * 服务接口
+     * 
+     * @param pcmd
+     * @param clazz
+     * @return
+     */
+    public static <T> T service(final PluginCommand cmd, Class<T> clazz) {
+        return new Standin<T>(clazz) {
+            public Object action(Method method, Object[] args) {
+                PluginCommand pcmd = new PluginCommand(cmd);
+                String operate = method.getName();
+                pcmd.setOperate(operate);
+                Class<?>[] paramTypes = method.getParameterTypes();
+                Annotation[][] annos = method.getParameterAnnotations();
+                int size = paramTypes.length;
+                String paramName;
+                for (int i = 0; i < size; i++) {
+                    paramName = Helpers.getAliasName(annos[i]);
+                    if (Strings.isEmpty(paramName)) {
+                        paramName = operate + i;
+                    }
+                    pcmd.setParameter(paramName, args[i]);
+                }
+                return PluginHelper.toConsole(pcmd);
+            }
+        }.getSource();
     }
 
 }

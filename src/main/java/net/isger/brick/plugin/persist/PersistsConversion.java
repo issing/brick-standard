@@ -1,5 +1,6 @@
 package net.isger.brick.plugin.persist;
 
+import java.io.File;
 import java.util.Map;
 
 import net.isger.brick.util.ScanLoader;
@@ -16,7 +17,7 @@ public class PersistsConversion extends ScanLoader implements Conversion {
 
     static {
         FILTER = new ScanFilter() {
-            public boolean isDeep() {
+            public boolean isDeep(File root, File path) {
                 return true;
             }
 
