@@ -18,7 +18,7 @@ import net.isger.brick.Constants;
 import net.isger.brick.auth.AuthCommand;
 import net.isger.brick.auth.AuthHelper;
 import net.isger.brick.auth.AuthIdentity;
-import net.isger.brick.auth.BaseAuthToken;
+import net.isger.brick.auth.BaseToken;
 import net.isger.brick.core.Console;
 import net.isger.util.Helpers;
 import net.isger.util.anno.Alias;
@@ -100,7 +100,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 /* 建立连接会话 */
                 if (getIdentity(session) == null) {
                     AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
-                            new BaseAuthToken(session.getId(), session));
+                            new BaseToken(session.getId(), session));
                     cmd.setOperate(AuthCommand.OPERATE_LOGIN);
                     console.execute(cmd);
                     setIdentity(session, cmd.getIdentity());
@@ -122,11 +122,13 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 /* 注销连接会话 */
                 if (Helpers.toBoolean(session.getAttribute(ATTR_LOCAL))) {
                     AuthIdentity identity = getIdentity(session);
-                    AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
-                            identity.getToken());
-                    cmd.setIdentity(identity);
-                    cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
-                    console.execute(cmd);
+                    if (identity != null) {
+                        AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
+                                identity.getToken());
+                        cmd.setIdentity(identity);
+                        cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
+                        console.execute(cmd);
+                    }
                 }
             }
         });

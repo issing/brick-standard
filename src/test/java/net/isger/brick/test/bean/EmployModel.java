@@ -14,9 +14,9 @@ public class EmployModel extends Model {
     private static final String FIELD_INPUT_TIME = "input_time";
 
     public EmployModel() {
-        super(Helpers.wrap("标识", FIELD_ID, "string", 20), Helpers.wrap("名称",
-                FIELD_NAME, "string", 20), Helpers.wrap("维护时间",
-                FIELD_INPUT_TIME, "date"));
+        super(Helpers.wraps(Helpers.wrap("标识", FIELD_ID, "string", 20),
+                Helpers.wrap("名称", FIELD_NAME, "string", 20),
+                Helpers.wrap("维护时间", FIELD_INPUT_TIME, "date")));
     }
 
     public EmployModel(Object... args) {

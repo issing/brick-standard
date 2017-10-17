@@ -6,8 +6,8 @@ import net.isger.brick.plugin.PluginHandler;
 public class AuthorizeHandler extends PluginHandler {
 
     public AuthorizeHandler() {
-        this.setName(AuthConstants.OPERATE_AUTH);
-        this.setOperate(AuthConstants.OPERATE_AUTH);
+        this.setName(AuthCommand.OPERATE_AUTH);
+        this.setOperate(AuthCommand.OPERATE_AUTH);
     }
 
     public BaseCommand toCommand(Object message) {

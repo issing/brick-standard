@@ -1,8 +1,10 @@
 package net.isger.brick.plugin.service;
 
 import java.io.File;
+import java.lang.reflect.Type;
 
 import net.isger.brick.util.ScanLoader;
+import net.isger.util.Reflects;
 import net.isger.util.Strings;
 import net.isger.util.reflect.conversion.Conversion;
 import net.isger.util.scan.ScanFilter;
@@ -36,11 +38,11 @@ public class ServicesConversion extends ScanLoader implements Conversion {
         return INSTANCE;
     }
 
-    public boolean isSupport(Class<?> type) {
-        return Services.class.isAssignableFrom(type);
+    public boolean isSupport(Type type) {
+        return Services.class.isAssignableFrom(Reflects.getRawClass(type));
     }
 
-    public Object convert(Class<?> type, Object res) {
+    public Object convert(Type type, Object res) {
         return new Services(toList(load(res)));
     }
 

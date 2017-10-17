@@ -1,6 +1,7 @@
 package net.isger.brick.plugin.persist;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 import net.isger.brick.util.ScanLoader;
@@ -38,11 +39,11 @@ public class PersistsConversion extends ScanLoader implements Conversion {
         return INSTANCE;
     }
 
-    public boolean isSupport(Class<?> type) {
-        return Persists.class.isAssignableFrom(type);
+    public boolean isSupport(Type type) {
+        return Persists.class.isAssignableFrom(Reflects.getRawClass(type));
     }
 
-    public Object convert(Class<?> type, Object res) {
+    public Object convert(Type type, Object res) {
         return new Persists(toList(load(res)));
     }
 

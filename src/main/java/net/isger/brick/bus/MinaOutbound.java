@@ -4,9 +4,6 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.isger.brick.auth.AuthIdentity;
-import net.isger.util.anno.Ignore;
-
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoService;
 import org.apache.mina.core.session.IoSession;
@@ -14,6 +11,9 @@ import org.apache.mina.transport.socket.SocketConnector;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.isger.brick.auth.AuthIdentity;
+import net.isger.util.anno.Ignore;
 
 public class MinaOutbound extends MinaEndpoint {
 
@@ -36,7 +36,8 @@ public class MinaOutbound extends MinaEndpoint {
 
     protected IoSession getSession(BusCommand cmd) {
         AuthIdentity identity = cmd.getIdentity();
-        IoSession session = sessions.get(identity.getId());
+        String identityId = identity == null ? null : identity.getId();
+        IoSession session = sessions.get(identityId);
         if (session == null || session.isClosing()) {
             SocketAddress address = getAddress();
             ConnectFuture future = ((SocketConnector) getService())
@@ -52,7 +53,7 @@ public class MinaOutbound extends MinaEndpoint {
                         LOG.info("Connected to [{}://{}]", getProtocolName(),
                                 address);
                     }
-                    sessions.put(identity.getId(), session);
+                    sessions.put(identityId, session);
                     setIdentity(session, identity);
                     break;
                 }
