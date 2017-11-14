@@ -377,7 +377,7 @@ public class CommonPersist extends PersistProxy {
                                 }
                             }, models, resultMeta);
                 }
-                /* 查询目标数据 */
+                /* 获取元素类型 */
                 TypeToken<?> typeToken = field.getToken();
                 Class<?> rawClass = typeToken.getRawClass();
                 if (Collection.class.isAssignableFrom(rawClass)) {
@@ -387,31 +387,46 @@ public class CommonPersist extends PersistProxy {
                     rawClass = (Class<?>) Reflects
                             .getComponentType(typeToken.getType());
                 }
-                models = new ArrayList<Model>();
-                scmd.setTable(models);
-                final Model targetModel = Model.create(rawClass);
-                targetModel.metaEmpty();
-                for (Object targetKey : targets.keySet()) {
-                    models.add(model = targetModel.clone());
-                    model.metaValue(resultMeta.targetColumn, targetKey); // 列值（目标字段）
-                }
                 final Map<Object, List<Object>> pending = new HashMap<Object, List<Object>>();
-                Helpers.each(single(scmd, null, null, rawClass),
-                        new Callable<Void>() {
-                            public Void call(Object... args) {
-                                Object instance = args[1];
-                                Object[] outerArgs = (Object[]) args[2];
-                                Object key = ((Meta) outerArgs[0])
-                                        .getValue(instance);
-                                if (key != null) {
-                                    for (Object o : targets.get(key)) {
-                                        Helpers.toAppend(pending, o, instance,
-                                                false);
+                /* 目标直接赋值（未配置目标列） */
+                if (Strings.isEmpty(resultMeta.targetColumn)) {
+                    for (Entry<Object, List<Object>> targetEntry : targets
+                            .entrySet()) {
+                        for (Object o : targetEntry.getValue()) {
+                            Helpers.toAppend(pending, o, targetEntry.getKey(),
+                                    false);
+                        }
+                    }
+                }
+                /* 查询目标数据（已配置目标列） */
+                else {
+                    // 构建目标查询模型（根据唯一键）
+                    final Model targetModel = Model.create(rawClass);
+                    targetModel.metaEmpty();
+                    scmd.setTable(models = new ArrayList<Model>());
+                    for (Object targetKey : targets.keySet()) {
+                        // 为模型设定检索值
+                        models.add(model = targetModel.clone());
+                        model.metaValue(resultMeta.targetColumn, targetKey); // 列值（目标字段）
+                    }
+                    Helpers.each(single(scmd, null, null, rawClass),
+                            new Callable<Void>() {
+                                public Void call(Object... args) {
+                                    Object instance = args[1];
+                                    Object[] outerArgs = (Object[]) args[2];
+                                    Object key = ((Meta) outerArgs[0])
+                                            .getValue(instance);
+                                    if (key != null) {
+                                        for (Object o : targets.get(key)) {
+                                            Helpers.toAppend(pending, o,
+                                                    instance, false);
+                                        }
                                     }
+                                    return null;
                                 }
-                                return null;
-                            }
-                        }, targetModel.meta(resultMeta.targetColumn));
+                            }, targetModel.meta(resultMeta.targetColumn));
+                }
+                /* 完成数据映射 */
                 for (Entry<Object, List<Object>> p : pending.entrySet()) {
                     field.setValue(p.getKey(), p.getValue());
                 }
