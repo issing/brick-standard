@@ -3,15 +3,17 @@ package net.isger.brick.bus;
 import java.io.IOException;
 import java.net.SocketAddress;
 
-import org.apache.mina.core.service.IoService;
+import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.transport.socket.SocketAcceptor;
+import org.apache.mina.transport.socket.nio.NioDatagramAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.AuthToken;
+import net.isger.util.Asserts;
 
 public class MinaInbound extends MinaEndpoint {
 
@@ -23,7 +25,7 @@ public class MinaInbound extends MinaEndpoint {
 
     protected void open() {
         super.open();
-        SocketAcceptor acceptor = (SocketAcceptor) getService();
+        IoAcceptor acceptor = (IoAcceptor) getService();
         /* 绑定服务端口 */
         SocketAddress address = getAddress();
         try {
@@ -32,12 +34,14 @@ public class MinaInbound extends MinaEndpoint {
             }
             acceptor.bind(address);
         } catch (IOException e) {
-            throw new IllegalStateException(
-                    "(X) Failure to bind [" + address + "]", e);
+            throw Asserts.state("Failure to bind [%s]", address, e);
         }
     }
 
-    protected IoService createService() {
+    protected IoAcceptor createService() {
+        if ("udp".equalsIgnoreCase(getChannel())) {
+            return new NioDatagramAcceptor();
+        }
         return new NioSocketAcceptor();
     }
 

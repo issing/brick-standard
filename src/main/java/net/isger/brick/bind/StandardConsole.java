@@ -11,7 +11,7 @@ import net.isger.brick.sched.SchedModule;
 import net.isger.util.anno.Ignore;
 
 /**
- * 默认控制台
+ * 标准版控制台
  * 
  * @author issing
  * 
@@ -43,4 +43,5 @@ public class StandardConsole extends Console implements StandardConstants {
         /* 配置内核 */
         super.loadKernel();
     }
+
 }

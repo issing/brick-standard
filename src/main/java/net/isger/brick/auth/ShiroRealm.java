@@ -1,11 +1,6 @@
 package net.isger.brick.auth;
 
-import net.isger.brick.Constants;
-import net.isger.brick.core.Console;
-import net.isger.util.Helpers;
-import net.isger.util.anno.Alias;
-import net.isger.util.anno.Ignore;
-import net.isger.util.anno.Ignore.Mode;
+import java.util.List;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -15,6 +10,13 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+
+import net.isger.brick.Constants;
+import net.isger.brick.core.Console;
+import net.isger.util.Helpers;
+import net.isger.util.anno.Alias;
+import net.isger.util.anno.Ignore;
+import net.isger.util.anno.Ignore.Mode;
 
 /**
  * 授权域
@@ -40,20 +42,34 @@ public class ShiroRealm extends AuthorizingRealm {
             PrincipalCollection principals) {
         AuthCommand cmd = AuthCommand.newAction();
         cmd.setOperate(AuthCommand.OPERATE_AUTH);
-        cmd.setToken(principals.asList());
+        List<?> token = principals.asList();
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
+        switch (token.size()) {
+        case 1:
+            if (token.get(0) instanceof AuthInfo) {
+                addAuthInfo(info, (AuthInfo) token.get(0));
+            } else {
+                break;
+            }
+        case 0:
+            return info;
+        }
+        cmd.setToken(token);
         try {
             console.execute(cmd);
-            AuthInfo ai = (AuthInfo) cmd.getResult();
-            if (ai != null) {
-                info.addRoles(ai.getRoles());
-                info.addStringPermissions(ai.getPermissions());
+            if (cmd.getResult() instanceof AuthInfo) {
+                addAuthInfo(info, (AuthInfo) cmd.getResult());
             }
         } catch (Exception e) {
-            throw new IllegalStateException(
-                    "Failure to get authorization info", e);
+            throw new IllegalStateException("Failure to get authorization info",
+                    e);
         }
         return info;
+    }
+
+    private void addAuthInfo(SimpleAuthorizationInfo info, AuthInfo authInfo) {
+        info.addRoles(authInfo.getRoles());
+        info.addStringPermissions(authInfo.getPermissions());
     }
 
     protected AuthenticationInfo doGetAuthenticationInfo(

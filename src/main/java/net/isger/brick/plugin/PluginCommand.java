@@ -7,9 +7,9 @@ import net.isger.util.reflect.BoundMethod;
 
 public class PluginCommand extends GateCommand {
 
-    public static final String KEY_NAME = "plugin-name";
+    public static final String CTRL_NAME = "plugin-name";
 
-    public static final String KEY_PERSIST = "plugin-persist";
+    public static final String CTRL_PERSIST = "plugin-persist";
 
     public PluginCommand() {
     }
@@ -48,11 +48,11 @@ public class PluginCommand extends GateCommand {
     }
 
     public static String getName(BaseCommand cmd) {
-        return cmd.getHeader(KEY_NAME);
+        return cmd.getHeader(CTRL_NAME);
     }
 
     public static void setName(BaseCommand cmd, String name) {
-        cmd.setHeader(KEY_NAME, name);
+        cmd.setHeader(CTRL_NAME, name);
     }
 
     public String getName() {
@@ -64,11 +64,11 @@ public class PluginCommand extends GateCommand {
     }
 
     public static String getPersist(BaseCommand cmd) {
-        return cmd.getHeader(KEY_PERSIST);
+        return cmd.getHeader(CTRL_PERSIST);
     }
 
     public static void setPersist(BaseCommand cmd, String name) {
-        cmd.setHeader(KEY_PERSIST, name);
+        cmd.setHeader(CTRL_PERSIST, name);
     }
 
     public String getPersist() {

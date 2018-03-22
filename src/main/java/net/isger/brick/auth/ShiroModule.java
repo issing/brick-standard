@@ -1,11 +1,11 @@
 package net.isger.brick.auth;
 
-import net.isger.brick.core.Gate;
-import net.isger.util.anno.Ignore;
-
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.SessionsSecurityManager;
+
+import net.isger.brick.core.Gate;
+import net.isger.util.anno.Ignore;
 
 public class ShiroModule extends AuthModule {
 

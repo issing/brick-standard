@@ -25,6 +25,7 @@
 
     <proxool.version>0.9.1</proxool.version>
 
+    <netty.version>4.1.17.Final</netty.version>
     <mina.version>2.0.7</mina.version>
     <quartz.version>2.2.1</quartz.version>
     <shiro.version>1.2.4</shiro.version>
@@ -57,9 +58,16 @@
     </dependency>
     <!-- 工具依赖 -->
     <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+      <version>${netty.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.mina</groupId>
       <artifactId>mina-core</artifactId>
       <version>${mina.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.quartz-scheduler</groupId>

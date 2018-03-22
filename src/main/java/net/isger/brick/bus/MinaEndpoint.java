@@ -41,6 +41,9 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     @Alias(Constants.SYSTEM)
     private Bus bus;
 
+    @Ignore(mode = Mode.INCLUDE)
+    private boolean autoSession;
+
     private IoService service;
 
     /**
@@ -111,8 +114,9 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             public void messageReceived(IoSession session, Object message)
                     throws Exception {
                 AuthIdentity identity = getIdentity(session);
-                identity.active(); // 激活会话
-                message = getHandler().handle(identity, message);
+                identity.active(autoSession); // 激活会话
+                message = getHandler().handle(MinaEndpoint.this, identity,
+                        message);
                 if (message != null) {
                     session.write(message);
                 }

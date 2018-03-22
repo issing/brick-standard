@@ -8,8 +8,8 @@ public class ShiroIdentity extends AuthIdentity {
         return super.isLogin() && getToken().getSubject().isAuthenticated();
     }
 
-    public void active() {
-        getToken().getSubject().getSession().touch();
+    public void active(boolean create) {
+        getToken().getSubject().getSession(create).touch();
     }
 
     public ShiroToken getToken() {

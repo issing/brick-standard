@@ -27,6 +27,11 @@ import net.isger.util.reflect.BoundField;
 import net.isger.util.reflect.TypeToken;
 import net.isger.util.sql.Page;
 
+/**
+ * 通用持久
+ * 
+ * @author issing
+ */
 @Ignore
 public class CommonPersist extends PersistProxy {
 
@@ -261,18 +266,10 @@ public class CommonPersist extends PersistProxy {
                 /* 引用数据 */
                 if (resultMeta.meta.isReference()) {
                     switch (resultMeta.meta.getMode()) {
+                    // 桥接模式处理
                     case Meta.MODE_BRIDGE:
-                        Object sourceValue = row.get(resultMeta.sourceField); // 列值（源字段）
-                        // List<Object> instances = resultMeta.mapping
-                        // .get(sourceValue);
-                        // if (instances == null) {
-                        // // 源字段列值映射
-                        // resultMeta.mapping.put(sourceValue,
-                        // instances = new ArrayList<Object>());
-                        // }
-                        // instances.add(args[1]); // 实例对象
-                        Helpers.toAppend(resultMeta.mapping, sourceValue,
-                                args[1]);
+                        Helpers.toAppend(resultMeta.mapping,
+                                row.get(resultMeta.sourceField), args[1]);
                         break;
                     }
                 }
@@ -289,7 +286,6 @@ public class CommonPersist extends PersistProxy {
                         ((Map<String, Object>) args[2])
                                 .put(resultMeta.sourceField, fieldValue);
                     }
-                    // return args[2];
                     Helpers.toAppend(resultMeta.mapping, fieldValue, args[1]);
                 }
                 /* 初始置空 */
@@ -428,7 +424,16 @@ public class CommonPersist extends PersistProxy {
                 }
                 /* 完成数据映射 */
                 for (Entry<Object, List<Object>> p : pending.entrySet()) {
-                    field.setValue(p.getKey(), p.getValue());
+                    Helpers.each(p.getKey(), new Callable<Object>() {
+                        public Object call(Object... args) {
+                            Object instance = args[1];
+                            Object[] outerArgs = (Object[]) args[2];
+                            ((BoundField) outerArgs[0]).setValue(instance,
+                                    outerArgs[1]);
+                            return instance;
+                        }
+
+                    }, field, p.getValue());
                 }
             }
         }

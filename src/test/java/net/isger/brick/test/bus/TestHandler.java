@@ -1,6 +1,7 @@
 package net.isger.brick.test.bus;
 
 import net.isger.brick.auth.AuthIdentity;
+import net.isger.brick.bus.Endpoint;
 import net.isger.brick.bus.IdentityHandler;
 
 public class TestHandler implements IdentityHandler {
@@ -17,7 +18,8 @@ public class TestHandler implements IdentityHandler {
         return message;
     }
 
-    public Object handle(AuthIdentity identity, Object message) {
+    public Object handle(Endpoint endpoint, AuthIdentity identity,
+            Object message) {
         return handle(message);
     }
 
