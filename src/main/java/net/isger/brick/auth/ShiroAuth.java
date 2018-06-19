@@ -2,11 +2,19 @@ package net.isger.brick.auth;
 
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.isger.brick.core.BaseCommand;
 import net.isger.brick.core.Command;
 
 public class ShiroAuth extends BaseAuth {
+
+    private static final Logger LOG;
+
+    static {
+        LOG = LoggerFactory.getLogger(ShiroAuth.class);
+    }
 
     protected AuthIdentity createIdentity() {
         return new ShiroIdentity();
@@ -23,7 +31,9 @@ public class ShiroAuth extends BaseAuth {
         ShiroToken shiroToken = (ShiroToken) pending;
         try {
             shiroToken.getSubject().login(shiroToken);
+            shiroToken.getSubject().getSession(true).touch();
         } catch (Exception e) {
+            LOG.warn("Failure to login", e);
             shiroToken = null;
         }
         return super.login(identity, shiroToken);
