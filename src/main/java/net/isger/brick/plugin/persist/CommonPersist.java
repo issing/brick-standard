@@ -53,7 +53,7 @@ public class CommonPersist extends PersistProxy {
 
     public static final String OPCODE_NORMAL = "normal";
 
-    public static final String OPCODE_BATCH = "batch";
+    public static final String STATEMENT_BATCH = "batch";
 
     @Ignore(mode = Mode.INCLUDE)
     private boolean reset;
@@ -128,8 +128,8 @@ public class CommonPersist extends PersistProxy {
      */
     @Ignore(mode = Mode.INCLUDE)
     public void insert(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
+            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         PluginHelper.toConsole(cmd);
     }
 
@@ -142,8 +142,8 @@ public class CommonPersist extends PersistProxy {
      */
     @Ignore(mode = Mode.INCLUDE)
     public void delete(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
+            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         PluginHelper.toConsole(cmd);
     }
 
@@ -156,8 +156,8 @@ public class CommonPersist extends PersistProxy {
      */
     @Ignore(mode = Mode.INCLUDE)
     public void update(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
+            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         PluginHelper.toConsole(cmd);
     }
 
@@ -169,8 +169,9 @@ public class CommonPersist extends PersistProxy {
      */
     @Ignore(mode = Mode.INCLUDE)
     public Object select(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object[] values,
+            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
+            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values,
+            @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args,
             @Alias(PluginConstants.PARAM_BEAN) Object bean,
             @Alias(PluginConstants.PARAM_PAGE) Page page) {
         boolean isMultiple = Helpers.isMultiple(cmd.getTable());
@@ -196,8 +197,9 @@ public class CommonPersist extends PersistProxy {
      */
     @Ignore(mode = Mode.INCLUDE)
     public Object single(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object[] values,
+            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
+            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values,
+            @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args,
             @Alias(PluginConstants.PARAM_BEAN) Object bean) {
         boolean isMultiple = Helpers.isMultiple(cmd.getTable());
         cmd.setParameter(PluginConstants.PARAM_PAGE, null);
@@ -350,7 +352,8 @@ public class CommonPersist extends PersistProxy {
                         models.add(model = resultMeta.model.clone());
                         model.metaValue(resultMeta.sourceColumn, sourceKey); // 列值（源字段）
                     }
-                    Helpers.each(select(scmd, null, null, Map.class, null),
+                    Helpers.each(
+                            select(scmd, null, null, null, Map.class, null),
                             new Callable<Void>() {
                                 public Void call(Object... args) {
                                     Integer index = (Integer) args[0];
@@ -405,7 +408,7 @@ public class CommonPersist extends PersistProxy {
                         models.add(model = targetModel.clone());
                         model.metaValue(resultMeta.targetColumn, targetKey); // 列值（目标字段）
                     }
-                    Helpers.each(single(scmd, null, null, rawClass),
+                    Helpers.each(single(scmd, null, null, null, rawClass),
                             new Callable<Void>() {
                                 public Void call(Object... args) {
                                     Object instance = args[1];
@@ -449,8 +452,8 @@ public class CommonPersist extends PersistProxy {
      */
     @Ignore(mode = Mode.INCLUDE)
     public boolean exists(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_OPCODE) Object opcode,
-            @Alias(PluginConstants.PARAM_VALUE) Object[] values) {
+            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
+            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         boolean result = true;
         try {
             PluginHelper.toConsole(cmd);

@@ -10,6 +10,9 @@ public class TestHandler implements IdentityHandler {
 
     private int amount;
 
+    public void open(Endpoint endpoint, AuthIdentity identity) {
+    }
+
     public Object handle(Object message) {
         System.out.println(prefix + ": " + message);
         if (++amount == 10) {
@@ -21,6 +24,9 @@ public class TestHandler implements IdentityHandler {
     public Object handle(Endpoint endpoint, AuthIdentity identity,
             Object message) {
         return handle(message);
+    }
+
+    public void close(Endpoint endpoint, AuthIdentity identity) {
     }
 
 }

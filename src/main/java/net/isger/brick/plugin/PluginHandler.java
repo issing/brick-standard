@@ -38,7 +38,7 @@ public class PluginHandler extends CommandHandler {
      * @return
      */
     public BaseCommand toCommand(PluginCommand cmd, Object value) {
-        cmd.setParameter(PluginConstants.PARAM_VALUE, value);
+        cmd.setParameter(PluginConstants.PARAM_STATEMENT_VALUE, value);
         return toCommand(cmd);
     }
 

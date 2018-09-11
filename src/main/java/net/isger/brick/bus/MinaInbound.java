@@ -15,6 +15,11 @@ import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.AuthToken;
 import net.isger.util.Asserts;
 
+/**
+ * MINA入端
+ * 
+ * @author issing
+ */
 public class MinaInbound extends MinaEndpoint {
 
     private static final Logger LOG;
@@ -23,6 +28,9 @@ public class MinaInbound extends MinaEndpoint {
         LOG = LoggerFactory.getLogger(MinaInbound.class);
     }
 
+    /**
+     * 打开服务端口
+     */
     protected void open() {
         super.open();
         IoAcceptor acceptor = (IoAcceptor) getService();
@@ -65,6 +73,9 @@ public class MinaInbound extends MinaEndpoint {
         }
     }
 
+    /**
+     * 关闭服务端口
+     */
     protected void close() {
         ((SocketAcceptor) getService()).unbind();
         super.close();

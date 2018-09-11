@@ -36,7 +36,7 @@ public class MinaOutbound extends MinaEndpoint {
 
     protected IoSession getSession(BusCommand cmd) {
         AuthIdentity identity = cmd.getIdentity();
-        String identityId = identity == null ? null : identity.getId();
+        String identityId = identity.getId();
         IoSession session = sessions.get(identityId);
         if (session == null || session.isClosing()) {
             SocketAddress address = getAddress();

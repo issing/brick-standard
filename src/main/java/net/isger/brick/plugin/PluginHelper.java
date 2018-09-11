@@ -114,9 +114,9 @@ public class PluginHelper extends CoreHelper {
      * @return
      */
     public static Object toPersist(PluginCommand cmd) {
-        Object value = cmd.getParameter(PluginConstants.PARAM_VALUE);
+        Object value = cmd.getParameter(PluginConstants.PARAM_STATEMENT_VALUE);
         if (!(value == null || value instanceof Object[])) {
-            cmd.setParameter(PluginConstants.PARAM_VALUE,
+            cmd.setParameter(PluginConstants.PARAM_STATEMENT_VALUE,
                     new Object[] { value });
         }
         getPlugin().persist(cmd);
@@ -155,12 +155,12 @@ public class PluginHelper extends CoreHelper {
      * @param cmd
      * @param operate
      * @param persist
-     * @param opcode
+     * @param statement
      * @return
      */
     public static Object toPersist(PluginCommand cmd, String operate,
-            String persist, String opcode) {
-        cmd.setParameter(PluginConstants.PARAM_OPCODE, opcode);
+            String persist, String statement) {
+        cmd.setParameter(PluginConstants.PARAM_STATEMENT_ID, statement);
         return toPersist(cmd, operate, persist);
     }
 
@@ -170,14 +170,31 @@ public class PluginHelper extends CoreHelper {
      * @param cmd
      * @param operate
      * @param persist
-     * @param opcode
+     * @param statement
      * @param value
      * @return
      */
     public static Object toPersist(PluginCommand cmd, String operate,
-            String persist, String opcode, Object value) {
-        cmd.setParameter(PluginConstants.PARAM_VALUE, value);
-        return toPersist(cmd, operate, persist, opcode);
+            String persist, String statement, Object value) {
+        cmd.setParameter(PluginConstants.PARAM_STATEMENT_VALUE, value);
+        return toPersist(cmd, operate, persist, statement);
+    }
+
+    /**
+     * 执行插件持久
+     *
+     * @param cmd
+     * @param operate
+     * @param persist
+     * @param statement
+     * @param value
+     * @param args
+     * @return
+     */
+    public static Object toPersists(PluginCommand cmd, String operate,
+            String persist, String statement, Object value, Object... args) {
+        cmd.setParameter(PluginConstants.PARAM_STATEMENT_ARGS, args);
+        return toPersists(cmd, operate, persist, statement, value);
     }
 
     /**

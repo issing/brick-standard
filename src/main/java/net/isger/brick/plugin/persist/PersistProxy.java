@@ -7,6 +7,7 @@ import java.util.List;
 
 import net.isger.brick.core.Command;
 import net.isger.brick.plugin.PluginCommand;
+import net.isger.brick.plugin.PluginConstants;
 import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
 import net.isger.util.Helpers;
@@ -23,8 +24,6 @@ import net.isger.util.reflect.BoundMethod;
  */
 @Ignore
 public class PersistProxy extends BasePersist {
-
-    public static final String PARAM_IDENTITY = "persist.identity";
 
     protected final Object target;
 
@@ -47,12 +46,17 @@ public class PersistProxy extends BasePersist {
         if (cmd.getTable() == null) {
             cmd.setTable(targetClass);
         }
+        String statement = cmd.getParameter(PluginConstants.PARAM_STATEMENT_ID);
+        if (Strings.isNotEmpty(statement)) {
+            statement = operate + ":" + statement.trim();
+        }
         String persist = PluginCommand.getPersist(cmd);
         BoundMethod boundMethod;
-        if ((boundMethod = Reflects.getBoundMethod(targetClass, persist)) == null
-                && (boundMethod = Reflects.getBoundMethod(targetClass, operate)) == null) {
-            cmd.setCondition(Strings.empty(
-                    (String) cmd.getParameter(PARAM_IDENTITY), operate));
+        if ((boundMethod = Reflects.getBoundMethod(targetClass,
+                persist)) == null
+                && (boundMethod = Reflects.getBoundMethod(targetClass,
+                        operate)) == null) {
+            cmd.setCondition(statement);
         } else {
             Method method = boundMethod.getMethod();
             Class<?>[] paramTypes = method.getParameterTypes();
@@ -70,15 +74,16 @@ public class PersistProxy extends BasePersist {
                     paramName = Helpers.getAliasName(annos[i]);
                     if (Strings.isEmpty(paramName)) {
                         paramValue = cmd.getParameter(operate + i);
+                    } else if (PluginConstants.PARAM_STATEMENT_ID
+                            .equals(paramName)) {
+                        values.add(paramValue = statement);
                     } else {
                         values.add(paramValue = cmd.getParameter(paramName));
                     }
                 }
                 params.add(paramValue);
             }
-            cmd.setCondition(Strings.empty(
-                    (String) cmd.getParameter(PARAM_IDENTITY), operate), values
-                    .toArray());
+            cmd.setCondition(values.toArray());
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {
                     Object result = method.invoke(target, params.toArray());

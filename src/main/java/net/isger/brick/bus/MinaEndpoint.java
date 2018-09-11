@@ -13,6 +13,8 @@ import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.filter.codec.ProtocolEncoderAdapter;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.isger.brick.Constants;
 import net.isger.brick.auth.AuthCommand;
@@ -32,6 +34,8 @@ public abstract class MinaEndpoint extends SocketEndpoint {
 
     private static final String ATTR_LOCAL = "brick.bus.mina.session.local";
 
+    private static final Logger LOG;
+
     /** 控制台 */
     @Ignore(mode = Mode.INCLUDE)
     @Alias(Constants.SYSTEM)
@@ -45,6 +49,10 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     private boolean autoSession;
 
     private IoService service;
+
+    static {
+        LOG = LoggerFactory.getLogger(MinaEndpoint.class);
+    }
 
     /**
      * 获取服务
@@ -100,15 +108,18 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         /* 设置处理器 */
         service.setHandler(new IoHandlerAdapter() {
             public void sessionOpened(IoSession session) throws Exception {
+                AuthIdentity identity = getIdentity(session);
                 /* 建立连接会话 */
-                if (getIdentity(session) == null) {
+                if (identity == null) {
                     AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
                             new BaseToken(session.getId(), session));
                     cmd.setOperate(AuthCommand.OPERATE_LOGIN);
                     console.execute(cmd);
-                    setIdentity(session, cmd.getIdentity());
+                    setIdentity(session, identity = cmd.getIdentity());
                     session.setAttribute(ATTR_LOCAL, true);
                 }
+                getHandler().open(MinaEndpoint.this, identity);
+                LOG.info("Session opened [{}]", session.getId());
             }
 
             public void messageReceived(IoSession session, Object message)
@@ -123,9 +134,10 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             }
 
             public void sessionClosed(IoSession session) throws Exception {
+                AuthIdentity identity = getIdentity(session);
+                getHandler().close(MinaEndpoint.this, identity);
                 /* 注销连接会话 */
                 if (Helpers.toBoolean(session.getAttribute(ATTR_LOCAL))) {
-                    AuthIdentity identity = getIdentity(session);
                     if (identity != null) {
                         AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
                                 identity.getToken());
@@ -134,14 +146,27 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                         console.execute(cmd);
                     }
                 }
+                LOG.info("Session Closed [{}]", session.getId());
             }
         });
     }
 
+    /**
+     * 设置会话身份
+     *
+     * @param session
+     * @param identity
+     */
     protected void setIdentity(IoSession session, AuthIdentity identity) {
         session.setAttribute(ATTR_IDENTITY, identity);
     }
 
+    /**
+     * 获取会话身份
+     *
+     * @param session
+     * @return
+     */
     protected AuthIdentity getIdentity(IoSession session) {
         return (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
     }
