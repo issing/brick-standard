@@ -10,7 +10,7 @@ public interface PluginConstants extends Constants {
 
     public static final String PARAM_STATEMENT_ARGS = "common.statement.args";
 
-    public static final String PARAM_PAGE = "common.page";
-
     public static final String PARAM_BEAN = "common.bean";
+
+    public static final String PARAM_PAGE = "common.page";
 }

@@ -2,6 +2,6 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
   <entry key="select"><![CDATA[
-    SELECT * FROM t_employ WHERE name LIKE ?
+    SELECT * FROM t_employ WHERE "name" LIKE ?
   ]]></entry>
 </properties>

@@ -180,7 +180,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
 
     protected void close() {
         if (service != null) {
-            service.dispose();
+            service.dispose(true);
             service = null;
         }
     }

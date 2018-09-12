@@ -4,6 +4,6 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.isger.brick.test.bean.Employ">
   <select id="select" parameterType="object[]" resultType="map"><![CDATA[
-    select * from t_employ where name like #{array[0]}
+    select * from t_employ where "name" like #{array[0]}
   ]]></select>
 </mapper>

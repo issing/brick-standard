@@ -46,10 +46,10 @@ public class PersistProxy extends BasePersist {
         if (cmd.getTable() == null) {
             cmd.setTable(targetClass);
         }
-        String statement = cmd.getParameter(PluginConstants.PARAM_STATEMENT_ID);
-        if (Strings.isNotEmpty(statement)) {
-            statement = operate + ":" + statement.trim();
-        }
+        String statement = Strings.join(true, ":", new String[] { operate,
+                cmd.getParameter(PluginConstants.PARAM_STATEMENT_ID) });
+        Object[] statementValue = cmd
+                .getParameter(PluginConstants.PARAM_STATEMENT_VALUE);
         String persist = PluginCommand.getPersist(cmd);
         BoundMethod boundMethod;
         if ((boundMethod = Reflects.getBoundMethod(targetClass,
@@ -74,16 +74,21 @@ public class PersistProxy extends BasePersist {
                     paramName = Helpers.getAliasName(annos[i]);
                     if (Strings.isEmpty(paramName)) {
                         paramValue = cmd.getParameter(operate + i);
-                    } else if (PluginConstants.PARAM_STATEMENT_ID
-                            .equals(paramName)) {
-                        values.add(paramValue = statement);
                     } else {
-                        values.add(paramValue = cmd.getParameter(paramName));
+                        paramValue = cmd.getParameter(paramName);
+                        if (statementValue == null) {
+                            values.add(paramValue);
+                        }
                     }
                 }
                 params.add(paramValue);
             }
-            cmd.setCondition(values.toArray());
+            cmd.setCondition(new Object[] { statement,
+                    Helpers.coalesce(
+                            cmd.getParameter(
+                                    PluginConstants.PARAM_STATEMENT_VALUE),
+                            values.toArray()),
+                    cmd.getParameter(PluginConstants.PARAM_STATEMENT_ARGS) });
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {
                     Object result = method.invoke(target, params.toArray());
