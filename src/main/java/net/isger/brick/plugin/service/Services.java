@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import net.isger.util.Helpers;
-import net.isger.util.Strings;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.isger.util.Helpers;
+import net.isger.util.Strings;
 
 public class Services {
 
@@ -77,12 +77,11 @@ public class Services {
         return services.entrySet();
     }
 
-    public static final String getName(Class<? extends Service> clazz) {
+    public static final String getName(Class<?> clazz) {
         return getName(clazz, "");
     }
 
-    public static final String getName(Class<? extends Service> clazz,
-            String name) {
+    private static final String getName(Class<?> clazz, String name) {
         return Helpers.getAliasName(clazz, "Service$", Strings.toLower(name));
     }
 

@@ -77,12 +77,15 @@ public class CommonPersist extends PersistProxy {
 
     @Ignore(mode = Mode.INCLUDE)
     public final void initial(StubCommand cmd) {
-        if (create && create(cmd, tables[0])) {
+        if (create) {
+            boolean hasBoostrap = create(cmd, tables[0]);
             int size = tables.length;
             for (int i = 1; i < size; i++) {
                 create((StubCommand) cmd.clone(), tables[i]);
             }
-            boostrap(cmd);
+            if (hasBoostrap) {
+                boostrap(cmd);
+            }
         }
     }
 
@@ -262,7 +265,7 @@ public class CommonPersist extends PersistProxy {
                 BoundField field = (BoundField) args[0];
                 ResultMeta resultMeta = metas.get(field);
                 if (resultMeta == null) {
-                    metas.put(field, resultMeta = createResultMeta(field));
+                    metas.put(field, resultMeta = createResultMeta(field)); // 字段结果元数据
                 }
                 Map<String, Object> row = (Map<String, Object>) args[3]; // 行值
                 /* 引用数据 */
@@ -346,7 +349,7 @@ public class CommonPersist extends PersistProxy {
                 if (Strings.isEmpty(resultMeta.targetField)) {
                     targets.putAll(resultMeta.mapping);
                 } else {
-                    /* 查询映射数据 */
+                    /* 查询映射数据（关系表） */
                     scmd.setTable(models);
                     for (Object sourceKey : resultMeta.mapping.keySet()) {
                         models.add(model = resultMeta.model.clone());
@@ -404,26 +407,31 @@ public class CommonPersist extends PersistProxy {
                     targetModel.metaEmpty();
                     scmd.setTable(models = new ArrayList<Model>());
                     for (Object targetKey : targets.keySet()) {
+                        if (Strings.isEmpty(targetKey)) {
+                            continue; // 映射值为空（跳过检索）
+                        }
                         // 为模型设定检索值
                         models.add(model = targetModel.clone());
                         model.metaValue(resultMeta.targetColumn, targetKey); // 列值（目标字段）
                     }
-                    Helpers.each(single(scmd, null, null, null, rawClass),
-                            new Callable<Void>() {
-                                public Void call(Object... args) {
-                                    Object instance = args[1];
-                                    Object[] outerArgs = (Object[]) args[2];
-                                    Object key = ((Meta) outerArgs[0])
-                                            .getValue(instance);
-                                    if (key != null) {
-                                        for (Object o : targets.get(key)) {
-                                            Helpers.toAppend(pending, o,
-                                                    instance, false);
+                    if (models.size() > 0) {
+                        Helpers.each(single(scmd, null, null, null, rawClass),
+                                new Callable<Void>() {
+                                    public Void call(Object... args) {
+                                        Object instance = args[1];
+                                        Object[] outerArgs = (Object[]) args[2];
+                                        Object key = ((Meta) outerArgs[0])
+                                                .getValue(instance);
+                                        if (key != null) {
+                                            for (Object o : targets.get(key)) {
+                                                Helpers.toAppend(pending, o,
+                                                        instance, false);
+                                            }
                                         }
+                                        return null;
                                     }
-                                    return null;
-                                }
-                            }, targetModel.meta(resultMeta.targetColumn));
+                                }, targetModel.meta(resultMeta.targetColumn));
+                    }
                 }
                 /* 完成数据映射 */
                 for (Entry<Object, List<Object>> p : pending.entrySet()) {
@@ -462,16 +470,6 @@ public class CommonPersist extends PersistProxy {
         }
         return result;
     }
-
-    // /**
-    // * 统计
-    // *
-    // * @param opcode
-    // * @param values
-    // * @return
-    // */
-    // public int count(@Alias(PARAM_OPCODE) Object opcode,
-    // @Alias(PARAM_VALUE) Object[] values);
 
     private class ResultMeta {
         Meta meta;

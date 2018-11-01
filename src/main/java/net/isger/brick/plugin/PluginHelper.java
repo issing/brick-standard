@@ -204,12 +204,44 @@ public class PluginHelper extends CoreHelper {
      * @param clazz
      * @return
      */
-    public static <T> T service(final PluginCommand cmd, Class<T> clazz) {
+    public static <T> T service(PluginCommand cmd, Class<T> clazz) {
+        return service(cmd, clazz, null);
+    }
+
+    /**
+     * 服务接口
+     *
+     * @param cmd
+     * @param clazz
+     * @param domain
+     * @return
+     */
+    public static <T> T service(PluginCommand cmd, Class<T> clazz,
+            String domain) {
+        return service(cmd, clazz, domain, null);
+    }
+
+    /**
+     * 服务接口
+     *
+     * @param cmd
+     * @param clazz
+     * @param domain
+     * @param name
+     * @return
+     */
+    public static <T> T service(final PluginCommand cmd, final Class<T> clazz,
+            final String domain, final String name) {
         return new Standin<T>(clazz) {
             public Object action(Method method, Object[] args) {
-                PluginCommand pcmd = new PluginCommand(cmd);
+                PluginCommand shellCmd = new PluginCommand(cmd);
+                if (Strings.isNotEmpty(domain)) {
+                    shellCmd.setDomain(domain);
+                }
+                shellCmd.setName(
+                        Strings.isEmpty(name) ? Services.getName(clazz) : name);
                 String operate = method.getName();
-                pcmd.setOperate(operate);
+                shellCmd.setOperate(operate);
                 Class<?>[] paramTypes = method.getParameterTypes();
                 Annotation[][] annos = method.getParameterAnnotations();
                 int size = paramTypes.length;
@@ -219,9 +251,9 @@ public class PluginHelper extends CoreHelper {
                     if (Strings.isEmpty(paramName)) {
                         paramName = operate + i;
                     }
-                    pcmd.setParameter(paramName, args[i]);
+                    shellCmd.setParameter(paramName, args[i]);
                 }
-                return PluginHelper.toConsole(pcmd);
+                return PluginHelper.toConsole(shellCmd);
             }
         }.getSource();
     }

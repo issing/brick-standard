@@ -48,7 +48,7 @@ public class PersistProxy extends BasePersist {
         }
         String statement = Strings.join(true, ":", new String[] { operate,
                 cmd.getParameter(PluginConstants.PARAM_STATEMENT_ID) });
-        Object[] statementValue = cmd
+        Object statementValue = cmd
                 .getParameter(PluginConstants.PARAM_STATEMENT_VALUE);
         String persist = PluginCommand.getPersist(cmd);
         BoundMethod boundMethod;
@@ -76,18 +76,13 @@ public class PersistProxy extends BasePersist {
                         paramValue = cmd.getParameter(operate + i);
                     } else {
                         paramValue = cmd.getParameter(paramName);
-                        if (statementValue == null) {
-                            values.add(paramValue);
-                        }
+                        values.add(paramValue);
                     }
                 }
                 params.add(paramValue);
             }
             cmd.setCondition(new Object[] { statement,
-                    Helpers.coalesce(
-                            cmd.getParameter(
-                                    PluginConstants.PARAM_STATEMENT_VALUE),
-                            values.toArray()),
+                    Helpers.newArray(statementValue, values.toArray()),
                     cmd.getParameter(PluginConstants.PARAM_STATEMENT_ARGS) });
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {
