@@ -2,6 +2,8 @@ package net.isger.brick.plugin.service;
 
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.plugin.PluginHelper;
+import net.isger.brick.stub.StubCommand;
+import net.isger.util.Helpers;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
 
@@ -28,8 +30,19 @@ public class CommonService extends BaseService {
         PluginHelper.toPersist(cmd, "insert");
     }
 
+    public Object insert(PluginCommand cmd, Object table) {
+        StubCommand.setTable(cmd, table);
+        PluginHelper.toPersist(cmd, "insert");
+        return table;
+    }
+
     @Ignore(mode = Mode.INCLUDE)
     public void delete(PluginCommand cmd) {
+        PluginHelper.toPersist(cmd, "delete");
+    }
+
+    public void delete(PluginCommand cmd, Object table) {
+        StubCommand.setTable(cmd, table);
         PluginHelper.toPersist(cmd, "delete");
     }
 
@@ -38,9 +51,28 @@ public class CommonService extends BaseService {
         PluginHelper.toPersist(cmd, "update");
     }
 
+    public void update(PluginCommand cmd, Object... table) {
+        update(cmd, Helpers.groups(table));
+    }
+
+    public void update(PluginCommand cmd, Object[]... table) {
+        StubCommand.setTable(cmd, table);
+        PluginHelper.toPersist(cmd, "update");
+    }
+
     @Ignore(mode = Mode.INCLUDE)
     public void select(PluginCommand cmd) {
         PluginHelper.toPersist(cmd, "select");
+    }
+
+    public void select(PluginCommand cmd, Object table) {
+        StubCommand.setTable(cmd, table);
+        PluginHelper.toPersist(cmd, "select");
+    }
+
+    @Ignore(mode = Mode.INCLUDE)
+    public void destroy(PluginCommand cmd) {
+        PluginHelper.toPersist(cmd, "destroy");
     }
 
 }

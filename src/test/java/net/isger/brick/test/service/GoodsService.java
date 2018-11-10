@@ -11,7 +11,10 @@ public class GoodsService extends BaseService {
 
     public void insert(PluginCommand cmd) {
         if (!isCreate) {
-            PluginHelper.toPersist(new PluginCommand(cmd), "create");
+            try {
+                PluginHelper.toPersist(cmd.clone(), "create");
+            } catch (Exception e) {
+            }
             isCreate = true;
         }
         PluginHelper.toPersist(cmd);

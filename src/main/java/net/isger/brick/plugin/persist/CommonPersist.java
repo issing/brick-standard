@@ -232,11 +232,11 @@ public class CommonPersist extends PersistProxy {
         if (bean == null) {
             bean = this.tables[0];
         }
-        Class<?> clazz = Reflects.getClass(bean);
-        if (clazz == null || Map.class.isAssignableFrom(clazz)
+        Class<?> rawClass = Reflects.getClass(bean);
+        if (rawClass == null || Map.class.isAssignableFrom(rawClass)
                 || bean instanceof String) {
             result = Reflects.toList(grid);
-        } else if (Model.class.isAssignableFrom(clazz)) {
+        } else if (Model.class.isAssignableFrom(rawClass)) {
             result = Reflects.toList(grid);
             if (!(bean instanceof Class)) {
                 List<Model> container = new ArrayList<Model>();
@@ -249,7 +249,7 @@ public class CommonPersist extends PersistProxy {
                 result = container;
             }
         } else {
-            result = toResult(cmd, clazz, grid);
+            result = toResult(cmd, rawClass, grid);
         }
         if (page != null) {
             result = new Object[] { result, page };
@@ -258,14 +258,15 @@ public class CommonPersist extends PersistProxy {
     }
 
     @SuppressWarnings("unchecked")
-    private Object toResult(StubCommand cmd, Class<?> clazz, Object[] grid) {
+    private Object toResult(final StubCommand cmd, Class<?> clazz,
+            Object[] grid) {
         final Map<BoundField, ResultMeta> metas = new HashMap<>();
         Object result = Reflects.toList(clazz, grid, new Callable<Object>() {
             public Object call(Object... args) {
                 BoundField field = (BoundField) args[0];
                 ResultMeta resultMeta = metas.get(field);
                 if (resultMeta == null) {
-                    metas.put(field, resultMeta = createResultMeta(field)); // 字段结果元数据
+                    metas.put(field, resultMeta = createResultMeta(cmd, field)); // 字段结果元数据
                 }
                 Map<String, Object> row = (Map<String, Object>) args[3]; // 行值
                 /* 引用数据 */
@@ -305,12 +306,19 @@ public class CommonPersist extends PersistProxy {
     }
 
     @SuppressWarnings("unchecked")
-    private ResultMeta createResultMeta(BoundField field) {
+    private ResultMeta createResultMeta(StubCommand cmd, BoundField field) {
         ResultMeta resultMeta = new ResultMeta();
         resultMeta.meta = Meta.createMeta(field); // 元字段
         resultMeta.mapping = new HashMap<Object, List<Object>>();
         if ((resultMeta.model = resultMeta.meta.toModel()) == null) {
-            resultMeta.model = Model.create(field.getToken().getRawClass());
+            Class<?> rawClass = field.getToken().getRawClass();
+            if (rawClass.isInterface()) {
+                rawClass = console.getContainer().getInstance(Class.class,
+                        (Sqls.toColumnName(rawClass.getSimpleName())
+                                .replaceAll("[_]", ".") + ".class")
+                                        .substring(1));
+            }
+            resultMeta.model = rawClass == null ? null : Model.create(rawClass);
             resultMeta.sourceColumn = resultMeta.meta.getName();
             resultMeta.targetColumn = (String) resultMeta.meta.getValue();
             resultMeta.sourceField = Sqls.toFieldName(resultMeta.targetColumn);
@@ -388,6 +396,12 @@ public class CommonPersist extends PersistProxy {
                 } else if (rawClass.isArray()) {
                     rawClass = (Class<?>) Reflects
                             .getComponentType(typeToken.getType());
+                }
+                if (rawClass.isInterface()) {
+                    rawClass = console.getContainer().getInstance(Class.class,
+                            (Sqls.toColumnName(rawClass.getSimpleName())
+                                    .replaceAll("[_]", ".") + ".class")
+                                            .substring(1));
                 }
                 final Map<Object, List<Object>> pending = new HashMap<Object, List<Object>>();
                 /* 目标直接赋值（未配置目标列） */

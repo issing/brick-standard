@@ -28,7 +28,6 @@
 
     <netty.version>4.1.17.Final</netty.version>
     <mina.version>2.0.7</mina.version>
-    <quartz.version>2.2.1</quartz.version>
     <shiro.version>1.2.4</shiro.version>
   </properties>
 
@@ -57,7 +56,6 @@
       <artifactId>proxool</artifactId>
       <version>${proxool.version}</version>
     </dependency>
-    <!-- 存储依赖 -->
     <dependency>
       <groupId>redis.clients</groupId>
       <artifactId>jedis</artifactId>
@@ -76,11 +74,6 @@
       <artifactId>mina-core</artifactId>
       <version>${mina.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.quartz-scheduler</groupId>
-      <artifactId>quartz</artifactId>
-      <version>${quartz.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.shiro</groupId>

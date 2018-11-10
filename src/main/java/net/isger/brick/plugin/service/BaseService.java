@@ -17,7 +17,7 @@ public class BaseService extends PluginOperator implements Service {
     }
 
     @Ignore(mode = Mode.INCLUDE)
-    public void desctroy() {
+    public void destroy() {
     }
 
 }
