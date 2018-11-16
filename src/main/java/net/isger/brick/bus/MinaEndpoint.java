@@ -1,5 +1,9 @@
 package net.isger.brick.bus;
 
+import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.service.IoHandlerAdapter;
@@ -52,6 +56,12 @@ public abstract class MinaEndpoint extends SocketEndpoint {
 
     static {
         LOG = LoggerFactory.getLogger(MinaEndpoint.class);
+    }
+
+    private ExecutorService executor;
+
+    public MinaEndpoint() {
+        executor = Executors.newCachedThreadPool();
     }
 
     /**
@@ -118,6 +128,9 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                     setIdentity(session, identity = cmd.getIdentity());
                     session.setAttribute(ATTR_LOCAL, true);
                 }
+                String clientIP = ((InetSocketAddress) session
+                        .getRemoteAddress()).getAddress().getHostAddress();
+                identity.setAttribute(ATTR_CLIENT_IP, clientIP);
                 getHandler().open(MinaEndpoint.this, identity);
                 LOG.info("Session opened [{}]", session.getId());
             }
@@ -133,20 +146,29 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 }
             }
 
-            public void sessionClosed(IoSession session) throws Exception {
-                AuthIdentity identity = getIdentity(session);
-                getHandler().close(MinaEndpoint.this, identity);
-                /* 注销连接会话 */
-                if (Helpers.toBoolean(session.getAttribute(ATTR_LOCAL))) {
-                    if (identity != null) {
-                        AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
-                                identity.getToken());
-                        cmd.setIdentity(identity);
-                        cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
-                        console.execute(cmd);
+            public void sessionClosed(final IoSession session)
+                    throws Exception {
+                executor.execute(new Runnable() {
+                    public void run() {
+                        AuthIdentity identity = getIdentity(session);
+                        try {
+                            getHandler().close(MinaEndpoint.this, identity);
+                        } catch (Exception e) {
+                        }
+                        /* 注销连接会话 */
+                        if (Helpers
+                                .toBoolean(session.getAttribute(ATTR_LOCAL))) {
+                            if (identity != null) {
+                                AuthCommand cmd = AuthHelper.toCommand(
+                                        Constants.SYSTEM, identity.getToken());
+                                cmd.setIdentity(identity);
+                                cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
+                                console.execute(cmd);
+                            }
+                        }
+                        LOG.info("Session Closed [{}]", session.getId());
                     }
-                }
-                LOG.info("Session Closed [{}]", session.getId());
+                });
             }
         });
     }

@@ -81,7 +81,7 @@ public class Services {
         return getName(clazz, "");
     }
 
-    private static final String getName(Class<?> clazz, String name) {
+    public static final String getName(Class<?> clazz, String name) {
         return Helpers.getAliasName(clazz, "Service$", Strings.toLower(name));
     }
 
