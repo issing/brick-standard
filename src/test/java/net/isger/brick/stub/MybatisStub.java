@@ -6,12 +6,6 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.util.Properties;
 
-import net.isger.raw.Depository;
-import net.isger.raw.Raw;
-import net.isger.util.Files;
-import net.isger.util.Reflects;
-import net.isger.util.Strings;
-
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.Environment;
@@ -22,6 +16,12 @@ import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
+
+import net.isger.raw.Depository;
+import net.isger.raw.Raw;
+import net.isger.util.Files;
+import net.isger.util.Reflects;
+import net.isger.util.Strings;
 
 public class MybatisStub extends PoolStub {
 
@@ -56,9 +56,9 @@ public class MybatisStub extends PoolStub {
     }
 
     private SqlSessionFactory createSqlSessionFactory() {
+        Configuration configuration;
         InputStream mappingStream = null;
         try {
-            Configuration configuration;
             mappingStream = getMappingStream(mappingPath);
             if (mappingStream == null) {
                 configuration = new Configuration();
@@ -76,7 +76,8 @@ public class MybatisStub extends PoolStub {
         } catch (Exception e) {
             throw new IllegalStateException(
                     "Error while building ibatis SqlSessionFactory: "
-                            + e.getMessage(), e);
+                            + e.getMessage(),
+                    e);
         } finally {
             Files.close(mappingStream);
         }
@@ -107,10 +108,14 @@ public class MybatisStub extends PoolStub {
         Configuration configuration = getConfiguration();
         if (!configuration.hasStatement(key)) {
             name = name.replaceAll("[.]", "/") + "." + MYBATIS_PATH;
-            XMLMapperBuilder mapperParser = new XMLMapperBuilder(
-                    Reflects.getResourceAsStream(name), configuration, name,
-                    configuration.getSqlFragments());
-            mapperParser.parse();
+            InputStream is = Reflects.getResourceAsStream(name);
+            try {
+                XMLMapperBuilder mapperParser = new XMLMapperBuilder(is,
+                        configuration, name, configuration.getSqlFragments());
+                mapperParser.parse();
+            } finally {
+                Files.close(is);
+            }
         }
     }
 
@@ -124,10 +129,8 @@ public class MybatisStub extends PoolStub {
             try {
                 session = getSqlSession();
                 String name = ((Class<?>) table).getName();
-                String key = name
-                        + "."
-                        + Strings
-                                .empty((String) condition[0], cmd.getOperate());
+                String key = name + "." + Strings.empty((String) condition[0],
+                        cmd.getOperate());
                 addMapper(name, key);
                 result = session.insert(key, (Object[]) condition[1]);
             } finally {
@@ -149,10 +152,8 @@ public class MybatisStub extends PoolStub {
             try {
                 session = getSqlSession();
                 String name = ((Class<?>) table).getName();
-                String key = name
-                        + "."
-                        + Strings
-                                .empty((String) condition[0], cmd.getOperate());
+                String key = name + "." + Strings.empty((String) condition[0],
+                        cmd.getOperate());
                 addMapper(name, key);
                 result = session.selectList(key, (Object[]) condition[1]);
             } finally {
