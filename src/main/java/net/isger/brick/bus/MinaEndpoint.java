@@ -1,5 +1,6 @@
 package net.isger.brick.bus;
 
+import java.io.ByteArrayInputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -81,9 +82,10 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             public void encode(IoSession session, Object message,
                     ProtocolEncoderOutput out) throws Exception {
                 byte[] value = getProtocol().getEncoder().encode(message);
-                if (value != null) {
+                if (value != null && value.length > 0) {
                     IoBuffer buf = IoBuffer.allocate(value.length)
                             .setAutoExpand(true);
+                    buf.putInt(value.length);
                     buf.put(value);
                     buf.flip();
                     out.write(buf);
@@ -93,8 +95,19 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         final ProtocolDecoder decoder = new CumulativeProtocolDecoder() {
             protected boolean doDecode(IoSession session, IoBuffer in,
                     ProtocolDecoderOutput out) throws Exception {
+                if (in.remaining() < 4) {
+                    return false;
+                }
+                in.mark();
+                int size = in.getInt();
+                if (in.remaining() < size) {
+                    in.reset();
+                    return false;
+                }
+                byte[] content = new byte[size];
+                in.get(content);
                 Object message = getProtocol().getDecoder()
-                        .decode(in.asInputStream());
+                        .decode(new ByteArrayInputStream(content));
                 boolean result = message != null;
                 if (result) {
                     out.write(message);
