@@ -12,6 +12,10 @@ public class ShiroIdentity extends AuthIdentity {
         getToken().getSubject().getSession(create).touch();
     }
 
+    public void setTimeout(int timeout) {
+        getToken().getSubject().getSession().setTimeout(timeout);
+    }
+
     public ShiroToken getToken() {
         return (ShiroToken) super.getToken();
     }

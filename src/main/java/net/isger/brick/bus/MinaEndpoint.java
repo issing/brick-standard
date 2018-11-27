@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
@@ -53,6 +54,9 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     @Ignore(mode = Mode.INCLUDE)
     private boolean autoSession;
 
+    @Ignore(mode = Mode.INCLUDE)
+    private Integer timeout;
+
     private IoService service;
 
     static {
@@ -77,6 +81,10 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     protected void open() {
         super.open();
         service = createService();
+        if (timeout == null) {
+            // 默认会话30分钟超时
+            timeout = 30;
+        }
         /* 添加协议 */
         final ProtocolEncoder encoder = new ProtocolEncoderAdapter() {
             public void encode(IoSession session, Object message,
@@ -144,6 +152,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 String clientIP = ((InetSocketAddress) session
                         .getRemoteAddress()).getAddress().getHostAddress();
                 identity.setAttribute(ATTR_CLIENT_IP, clientIP);
+                identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout));
                 getHandler().open(MinaEndpoint.this, identity);
                 LOG.info("Session opened [{}]", session.getId());
             }
