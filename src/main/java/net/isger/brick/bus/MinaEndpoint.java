@@ -170,7 +170,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                             clientIP = (String) identity
                                     .getAttribute(ATTR_CLIENT_IP);
                         } catch (Exception e) {
-                            clientIP = "unknown[" + e.getMessage() + "]";
+                            clientIP = e.getMessage();
                         }
                         try {
                             getHandler().close(MinaEndpoint.this, identity);
@@ -187,7 +187,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                                 console.execute(cmd);
                             }
                         }
-                        LOG.info("Session Closed [{}] of {}", session.getId(),
+                        LOG.info("Session Closed [{}] of [{}]", session.getId(),
                                 clientIP);
                     }
                 });
