@@ -69,21 +69,12 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         executor = Executors.newCachedThreadPool();
     }
 
-    /**
-     * 获取服务
-     * 
-     * @return
-     */
-    protected IoService getService() {
-        return service;
-    }
-
     protected void open() {
         super.open();
         service = createService();
         if (timeout == null) {
-            // 默认会话30分钟超时
-            timeout = 30;
+            // 默认会话2分钟超时
+            timeout = 2;
         }
         /* 添加协议 */
         final ProtocolEncoder encoder = new ProtocolEncoderAdapter() {
@@ -154,7 +145,8 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 identity.setAttribute(ATTR_CLIENT_IP, clientIP);
                 identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout));
                 getHandler().open(MinaEndpoint.this, identity);
-                LOG.info("Session opened [{}]", session.getId());
+                LOG.info("Session opened [{}] of {}", session.getId(),
+                        clientIP);
             }
 
             public void messageReceived(IoSession session, Object message)
@@ -173,6 +165,13 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 executor.execute(new Runnable() {
                     public void run() {
                         AuthIdentity identity = getIdentity(session);
+                        String clientIP;
+                        try {
+                            clientIP = (String) identity
+                                    .getAttribute(ATTR_CLIENT_IP);
+                        } catch (Exception e) {
+                            clientIP = "unknown[" + e.getMessage() + "]";
+                        }
                         try {
                             getHandler().close(MinaEndpoint.this, identity);
                         } catch (Exception e) {
@@ -188,11 +187,28 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                                 console.execute(cmd);
                             }
                         }
-                        LOG.info("Session Closed [{}]", session.getId());
+                        LOG.info("Session Closed [{}] of {}", session.getId(),
+                                clientIP);
                     }
                 });
             }
         });
+    }
+
+    /**
+     * 创建服务
+     * 
+     * @return
+     */
+    protected abstract IoService createService();
+
+    /**
+     * 获取服务
+     * 
+     * @return
+     */
+    protected IoService getService() {
+        return service;
     }
 
     /**
@@ -214,13 +230,6 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     protected AuthIdentity getIdentity(IoSession session) {
         return (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
     }
-
-    /**
-     * 创建服务
-     * 
-     * @return
-     */
-    protected abstract IoService createService();
 
     protected void close() {
         if (service != null) {

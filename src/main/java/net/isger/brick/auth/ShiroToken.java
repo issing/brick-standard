@@ -8,13 +8,15 @@ public class ShiroToken extends AuthToken<AuthToken<?>>
 
     private static final long serialVersionUID = -740763605179398595L;
 
-    private Subject subject = new Subject.Builder().buildSubject();
+    private Subject subject;
 
     public ShiroToken() {
+        this(null);
     }
 
     public ShiroToken(AuthToken<?> token) {
         super(token);
+        this.subject = new Subject.Builder().buildSubject();
     }
 
     public Object getPrincipal() {

@@ -31,10 +31,9 @@ public class ShiroAuth extends BaseAuth {
         ShiroToken shiroToken = (ShiroToken) pending;
         try {
             shiroToken.getSubject().login(shiroToken);
-            shiroToken.getSubject().getSession(true).touch();
         } catch (Exception e) {
             LOG.warn("Failure to login", e);
-            shiroToken = null;
+            return null;
         }
         return super.login(identity, shiroToken);
     }
@@ -87,7 +86,12 @@ public class ShiroAuth extends BaseAuth {
     protected void logout(AuthIdentity identity) {
         Object pending = identity.getToken();
         if (pending instanceof ShiroToken) {
-            ((ShiroToken) pending).getSubject().logout();
+            try {
+                ((ShiroToken) pending).getSubject().logout();
+            } catch (Exception e) {
+                LOG.warn("Failure to logout [{}]", e.getMessage(),
+                        e.getCause());
+            }
         }
         super.logout(identity);
     }

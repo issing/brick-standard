@@ -9,6 +9,7 @@ public class ShiroIdentity extends AuthIdentity {
     }
 
     public void active(boolean create) {
+        super.active(create);
         getToken().getSubject().getSession(create).touch();
     }
 
