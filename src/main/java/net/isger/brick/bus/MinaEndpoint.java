@@ -94,13 +94,18 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         final ProtocolDecoder decoder = new CumulativeProtocolDecoder() {
             protected boolean doDecode(IoSession session, IoBuffer in,
                     ProtocolDecoderOutput out) throws Exception {
-                if (in.remaining() < 4) {
+                int remainCount = in.remaining();
+                if (remainCount < 4) {
                     return false;
                 }
                 in.mark();
                 int size = in.getInt();
-                if (in.remaining() < size) {
-                    in.reset();
+                remaining: {
+                    if (remainCount < size) {
+                        in.reset();
+                    } else if (size > 0) {
+                        break remaining;
+                    }
                     return false;
                 }
                 byte[] content = new byte[size];

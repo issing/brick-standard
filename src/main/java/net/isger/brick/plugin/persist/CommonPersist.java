@@ -18,7 +18,6 @@ import net.isger.brick.stub.model.Model;
 import net.isger.util.Callable;
 import net.isger.util.Helpers;
 import net.isger.util.Reflects;
-import net.isger.util.Sqls;
 import net.isger.util.Strings;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
@@ -233,9 +232,11 @@ public class CommonPersist extends PersistProxy {
             bean = this.tables[0];
         }
         Class<?> rawClass = Reflects.getClass(bean);
-        if (rawClass == null || Map.class.isAssignableFrom(rawClass)
-                || bean instanceof String) {
+        if (rawClass == null || Map.class.isAssignableFrom(rawClass)) {
             result = Reflects.toList(grid);
+        } else if (String.class.isAssignableFrom(rawClass)
+                || Reflects.getPrimitiveClass(rawClass) != null) {
+            result = Helpers.compact(grid[1]);
         } else if (Model.class.isAssignableFrom(rawClass)) {
             result = Reflects.toList(grid);
             if (!(bean instanceof Class)) {
@@ -260,7 +261,7 @@ public class CommonPersist extends PersistProxy {
     @SuppressWarnings("unchecked")
     private Object toResult(final StubCommand cmd, Class<?> clazz,
             Object[] grid) {
-        final Map<BoundField, ResultMeta> metas = new HashMap<>();
+        final Map<BoundField, ResultMeta> metas = new HashMap<BoundField, ResultMeta>();
         Object result = Reflects.toList(clazz, grid, new Callable<Object>() {
             public Object call(Object... args) {
                 BoundField field = (BoundField) args[0];
@@ -281,7 +282,7 @@ public class CommonPersist extends PersistProxy {
                 }
                 /* 内联数据 */
                 else {
-                    String fieldName = Sqls
+                    String fieldName = Helpers
                             .toFieldName(resultMeta.sourceColumn);
                     Object fieldValue = Helpers.getInstance(row, fieldName);
                     if (args[2] == Reflects.UNKNOWN) {
@@ -314,26 +315,27 @@ public class CommonPersist extends PersistProxy {
             Class<?> rawClass = field.getToken().getRawClass();
             if (rawClass.isInterface()) {
                 rawClass = console.getContainer().getInstance(Class.class,
-                        (Sqls.toColumnName(rawClass.getSimpleName())
+                        (Helpers.toColumnName(rawClass.getSimpleName())
                                 .replaceAll("[_]", ".") + ".class")
                                         .substring(1));
             }
             resultMeta.model = rawClass == null ? null : Model.create(rawClass);
             resultMeta.sourceColumn = resultMeta.meta.getName();
             resultMeta.targetColumn = (String) resultMeta.meta.getValue();
-            resultMeta.sourceField = Sqls.toFieldName(resultMeta.targetColumn);
+            resultMeta.sourceField = Helpers
+                    .toFieldName(resultMeta.targetColumn);
         } else {
             Map<String, Object> params = (Map<String, Object>) resultMeta.meta
                     .getValue();
             Map<String, Object> source = (Map<String, Object>) params
                     .get("source");
             resultMeta.sourceColumn = (String) source.get("name");
-            resultMeta.sourceField = Sqls
+            resultMeta.sourceField = Helpers
                     .toFieldName((String) source.get("value"));
             Map<String, Object> target = (Map<String, Object>) params
                     .get("target");
             resultMeta.targetColumn = (String) target.get("value");
-            resultMeta.targetField = Sqls
+            resultMeta.targetField = Helpers
                     .toFieldName((String) target.get("name"));
         }
         resultMeta.model.metaEmpty();
@@ -399,7 +401,7 @@ public class CommonPersist extends PersistProxy {
                 }
                 if (rawClass.isInterface()) {
                     rawClass = console.getContainer().getInstance(Class.class,
-                            (Sqls.toColumnName(rawClass.getSimpleName())
+                            (Helpers.toColumnName(rawClass.getSimpleName())
                                     .replaceAll("[_]", ".") + ".class")
                                             .substring(1));
                 }
