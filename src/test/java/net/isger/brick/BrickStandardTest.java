@@ -144,9 +144,9 @@ public class BrickStandardTest extends TestCase {
         MANAGER.getConsole().execute(cmd); // 方式三（使用配置文件）
 
         // 批量
-        cmd.setCondition((Object) Helpers.group(
-                Helpers.wraps(date, "3", "three"),
-                Helpers.wraps(date, "4", "four")));
+        cmd.setCondition(
+                (Object) Helpers.group(Helpers.wraps(date, "3", "three"),
+                        Helpers.wraps(date, "4", "four")));
         MANAGER.getConsole().execute(cmd); // 方式一（配置）
         cmd.setTable(Helpers.wrap(new EmployModel("5", "five", date),
                 new EmployModel("6", "six", date)));
@@ -160,8 +160,7 @@ public class BrickStandardTest extends TestCase {
         });
         MANAGER.getConsole().execute(cmd); // 方式二（集合）
         cmd.setTable(employ.modelName());
-        cmd.setCondition(
-                Helpers.wrap("id", "name", "input_time"),
+        cmd.setCondition(Helpers.wrap("id", "name", "input_time"),
                 Helpers.group(Helpers.wraps("9", "nine", date),
                         Helpers.wraps("10", "ten", date)));
         MANAGER.getConsole().execute(cmd); // 方式三（描述）
@@ -175,8 +174,8 @@ public class BrickStandardTest extends TestCase {
         cmd.setOperate(StubCommand.OPERATE_DELETE);
         MANAGER.getConsole().execute(cmd); // 方式一
         cmd.setTable(employ.modelName());
-        cmd.setCondition(Helpers.wrap(Helpers.wrap("name"),
-                Helpers.wrap("first")));
+        cmd.setCondition(
+                Helpers.wrap(Helpers.wrap("name"), Helpers.wrap("first")));
         MANAGER.getConsole().execute(cmd); // 方式二
         // try {
         // cmd.setCondition(
@@ -192,8 +191,8 @@ public class BrickStandardTest extends TestCase {
         MANAGER.getConsole().execute(cmd); // 方式四
 
         // 批量
-        cmd.setCondition((Object) Helpers.group(Helpers.wraps("5"),
-                Helpers.wraps("6")));
+        cmd.setCondition(
+                (Object) Helpers.group(Helpers.wraps("5"), Helpers.wraps("6")));
         MANAGER.getConsole().execute(cmd); // 方式一
     }
 
@@ -203,7 +202,8 @@ public class BrickStandardTest extends TestCase {
         cmd.setTable(employ.modelName());
         cmd.setOperate(StubCommand.OPERATE_UPDATE);
         cmd.setCondition((Object) new Object[][] {
-                { new String[] { "id", "name" }, new Object[] { "1", "first" } },
+                { new String[] { "id", "name" },
+                        new Object[] { "1", "first" } },
                 { new String[] { "id" }, new Object[] { "8" } } });
         MANAGER.getConsole().execute(cmd); // 方式一
 

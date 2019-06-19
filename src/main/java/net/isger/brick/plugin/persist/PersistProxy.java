@@ -43,7 +43,7 @@ public class PersistProxy extends BasePersist {
         String operate = cmd.getOperate();
         Object table = cmd.getTable();
         Class<?> targetClass = Reflects.getClass(target);
-        if (cmd.getTable() == null) {
+        if (table == null) {
             cmd.setTable(targetClass);
         }
         String statement = Strings.join(true, ":", new String[] { operate,
@@ -82,7 +82,7 @@ public class PersistProxy extends BasePersist {
                 params.add(paramValue);
             }
             cmd.setCondition(new Object[] { statement,
-                    Helpers.newArray(statementValue, values.toArray()),
+                    new Object[] { statementValue, values.toArray() },
                     cmd.getParameter(PluginConstants.PARAM_STATEMENT_ARGS) });
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {
