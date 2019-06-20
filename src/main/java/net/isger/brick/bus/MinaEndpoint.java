@@ -36,6 +36,10 @@ import net.isger.util.anno.Ignore.Mode;
 @Ignore
 public abstract class MinaEndpoint extends SocketEndpoint {
 
+    private static final byte[] MAGIC = "BRICK".getBytes();
+
+    private static final int DATA_MIN_LIMIT = MAGIC.length + Integer.SIZE / 8;
+
     private static final String ATTR_IDENTITY = "brick.bus.mina.session.identity";
 
     private static final String ATTR_LOCAL = "brick.bus.mina.session.local";
@@ -69,6 +73,30 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         executor = Executors.newCachedThreadPool();
     }
 
+    private int correct(IoBuffer in) {
+        byte value;
+        int index = 0;
+        for (;;) {
+            if (in.remaining() < DATA_MIN_LIMIT - index) {
+                return -1;
+            }
+            value = in.get();
+            if (value == MAGIC[index++]) {
+                if (index == MAGIC.length) {
+                    break;
+                }
+            } else {
+                in.mark();
+                index = 0;
+            }
+        }
+        int size = in.getInt();
+        if (size == 0) {
+            in.mark();
+        }
+        return in.remaining() >= size ? size : -1;
+    }
+
     protected void open() {
         super.open();
         service = createService();
@@ -82,8 +110,10 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                     ProtocolEncoderOutput out) throws Exception {
                 byte[] value = getProtocol().getEncoder().encode(message);
                 if (value != null && value.length > 0) {
-                    IoBuffer buf = IoBuffer.allocate(value.length)
+                    IoBuffer buf = IoBuffer
+                            .allocate(value.length + MAGIC.length)
                             .setAutoExpand(true);
+                    buf.put(MAGIC);
                     buf.putInt(value.length);
                     buf.put(value);
                     buf.flip();
@@ -94,19 +124,13 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         final ProtocolDecoder decoder = new CumulativeProtocolDecoder() {
             protected boolean doDecode(IoSession session, IoBuffer in,
                     ProtocolDecoderOutput out) throws Exception {
-                int remainCount = in.remaining();
-                if (remainCount < 4) {
-                    return false;
-                }
                 in.mark();
-                int size = in.getInt();
-                remaining: {
-                    if (remainCount < size) {
-                        in.reset();
-                    } else if (size > 0) {
-                        break remaining;
-                    }
+                int size = correct(in);
+                if (size < 0) {
+                    in.reset();
                     return false;
+                } else if (size == 0) {
+                    return true;
                 }
                 byte[] content = new byte[size];
                 in.get(content);
