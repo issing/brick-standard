@@ -66,8 +66,7 @@ public class PluginHelper extends CoreHelper {
      * @param clazz
      * @return
      */
-    public static Object toService(PluginCommand cmd,
-            Class<? extends Service> clazz) {
+    public static Object toService(PluginCommand cmd, Class<? extends Service> clazz) {
         return toService(cmd, Services.getName(clazz));
     }
 
@@ -79,8 +78,7 @@ public class PluginHelper extends CoreHelper {
      * @param operate
      * @return
      */
-    public static Object toService(PluginCommand cmd, String name,
-            String operate) {
+    public static Object toService(PluginCommand cmd, String name, String operate) {
         cmd.setOperate(operate);
         return toService(cmd, name);
     }
@@ -93,8 +91,7 @@ public class PluginHelper extends CoreHelper {
      * @param operate
      * @return
      */
-    public static Object toService(PluginCommand cmd,
-            Class<? extends Service> clazz, String operate) {
+    public static Object toService(PluginCommand cmd, Class<? extends Service> clazz, String operate) {
         return toService(cmd, Services.getName(clazz), operate);
     }
 
@@ -116,8 +113,7 @@ public class PluginHelper extends CoreHelper {
     public static Object toPersist(PluginCommand cmd) {
         Object value = cmd.getParameter(PluginConstants.PARAM_STATEMENT_VALUE);
         if (!(value == null || value instanceof Object[])) {
-            cmd.setParameter(PluginConstants.PARAM_STATEMENT_VALUE,
-                    new Object[] { value });
+            cmd.setParameter(PluginConstants.PARAM_STATEMENT_VALUE, Helpers.wraps(value));
         }
         getPlugin().persist(cmd);
         return cmd.getResult();
@@ -143,8 +139,7 @@ public class PluginHelper extends CoreHelper {
      * @param persist
      * @return
      */
-    public static Object toPersist(PluginCommand cmd, String operate,
-            String persist) {
+    public static Object toPersist(PluginCommand cmd, String operate, String persist) {
         cmd.setPersist(persist);
         return toPersist(cmd, operate);
     }
@@ -158,8 +153,7 @@ public class PluginHelper extends CoreHelper {
      * @param statement
      * @return
      */
-    public static Object toPersist(PluginCommand cmd, String operate,
-            String persist, String statement) {
+    public static Object toPersist(PluginCommand cmd, String operate, String persist, String statement) {
         cmd.setParameter(PluginConstants.PARAM_STATEMENT_ID, statement);
         return toPersist(cmd, operate, persist);
     }
@@ -174,8 +168,7 @@ public class PluginHelper extends CoreHelper {
      * @param value
      * @return
      */
-    public static Object toPersist(PluginCommand cmd, String operate,
-            String persist, String statement, Object value) {
+    public static Object toPersist(PluginCommand cmd, String operate, String persist, String statement, Object value) {
         cmd.setParameter(PluginConstants.PARAM_STATEMENT_VALUE, value);
         return toPersist(cmd, operate, persist, statement);
     }
@@ -191,8 +184,7 @@ public class PluginHelper extends CoreHelper {
      * @param args
      * @return
      */
-    public static Object toPersists(PluginCommand cmd, String operate,
-            String persist, String statement, Object value, Object... args) {
+    public static Object toPersists(PluginCommand cmd, String operate, String persist, String statement, Object value, Object... args) {
         cmd.setParameter(PluginConstants.PARAM_STATEMENT_ARGS, args);
         return toPersists(cmd, operate, persist, statement, value);
     }
@@ -216,8 +208,7 @@ public class PluginHelper extends CoreHelper {
      * @param domain
      * @return
      */
-    public static <T> T service(PluginCommand cmd, Class<T> clazz,
-            String domain) {
+    public static <T> T service(PluginCommand cmd, Class<T> clazz, String domain) {
         return service(cmd, clazz, domain, null);
     }
 
@@ -230,16 +221,14 @@ public class PluginHelper extends CoreHelper {
      * @param name
      * @return
      */
-    public static <T> T service(final PluginCommand cmd, final Class<T> clazz,
-            final String domain, final String name) {
+    public static <T> T service(PluginCommand cmd, final Class<T> clazz, final String domain, final String name) {
+        final PluginCommand shellCmd = new PluginCommand(cmd);
         return new Standin<T>(clazz) {
             public Object action(Method method, Object[] args) {
-                PluginCommand shellCmd = new PluginCommand(cmd);
                 if (Strings.isNotEmpty(domain)) {
                     shellCmd.setDomain(domain);
                 }
-                shellCmd.setName(
-                        Strings.isEmpty(name) ? Services.getName(clazz) : name);
+                shellCmd.setName(Strings.isEmpty(name) ? Services.getName(clazz) : name);
                 String operate = method.getName();
                 shellCmd.setOperate(operate);
                 Class<?>[] paramTypes = method.getParameterTypes();

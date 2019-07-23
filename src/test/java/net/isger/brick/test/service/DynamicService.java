@@ -4,7 +4,7 @@ import net.isger.brick.plugin.service.BaseService;
 
 public class DynamicService extends BaseService {
 
-    private int amount;
+    // private int amount;
 
     public void action() {
         System.out.println("DynamicService.action()");

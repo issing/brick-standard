@@ -19,8 +19,7 @@ public class StandardProvider implements ContainerProvider {
     }
 
     public void register(ContainerBuilder builder) {
-        builder.factory(Console.class, Constants.SYSTEM, StandardConsole.class,
-                Scope.SINGLETON);
+        builder.factory(Console.class, Constants.SYSTEM, StandardConsole.class, Scope.SINGLETON);
         builder.constant(Constants.BRICK_ENCODING, Constants.DEFAULT_ENCODING);
         builder.constant(Constants.BRICK_RAW, Constants.RAW_JSON);
     }

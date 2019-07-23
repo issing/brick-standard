@@ -18,11 +18,8 @@ public class StandardConsole extends Console implements StandardConstants {
 
     protected void loadKernel() {
         /* 标准内核 */
-        this.setupModule(MOD_AUTH, new ShiroModule()); // 认证模块
-        this.setupModule(MOD_PLUGIN, new PluginModule(), PluginCommand.class,
-                MOD_STUB);// 插件模块
-        // this.setupModule(MOD_SCHED, new SchedModule(), SchedCommand.class,
-        // MOD_PLUGIN);// 调度模块
+        setupModule(MOD_AUTH, new ShiroModule()); // 认证模块
+        setupModule(MOD_PLUGIN, new PluginModule(), PluginCommand.class, MOD_STUB);// 插件模块
         /* 默认内核 */
         super.loadKernel();
     }
