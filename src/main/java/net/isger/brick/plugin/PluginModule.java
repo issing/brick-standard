@@ -20,8 +20,7 @@ public class PluginModule extends GateModule {
 
     @SuppressWarnings("unchecked")
     public Class<? extends Gate> getImplementClass() {
-        Class<? extends Gate> implClass = (Class<? extends Gate>) getImplementClass(
-                PLUGIN, null);
+        Class<? extends Gate> implClass = (Class<? extends Gate>) getImplementClass(PLUGIN, null);
         if (implClass == null) {
             implClass = super.getImplementClass();
         }

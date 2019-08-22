@@ -1,10 +1,10 @@
 package net.isger.brick.plugin.service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +34,7 @@ public class Services {
                 if (instance instanceof Service) {
                     add((Service) instance);
                 } else if (instance instanceof Map) {
-                    for (Entry<String, Object> entry : ((Map<String, Object>) instance)
-                            .entrySet()) {
+                    for (Entry<String, Object> entry : ((Map<String, Object>) instance).entrySet()) {
                         instance = entry.getValue();
                         if (instance instanceof Service) {
                             put(entry.getKey(), (Service) instance);
@@ -69,12 +68,12 @@ public class Services {
         }
     }
 
-    public Service get(String name) {
-        return services.get(name);
+    public Map<String, Service> gets() {
+        return Collections.unmodifiableMap(services);
     }
 
-    public Set<Entry<String, Service>> entrySet() {
-        return services.entrySet();
+    public Service get(String name) {
+        return services.get(name);
     }
 
     public static final String getName(Class<?> clazz) {

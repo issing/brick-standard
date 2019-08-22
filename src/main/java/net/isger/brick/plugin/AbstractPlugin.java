@@ -26,18 +26,14 @@ public abstract class AbstractPlugin extends BaseGate implements Plugin {
     public void service(PluginCommand cmd) {
         String name = cmd.getName();
         Service service = getService(name);
-        Asserts.isNotNull(service,
-                "Unfound the specified service [%s] in the [%s] Plugin [%s], Check whether it is configured in the brick configuration file",
-                name, cmd.getDomain(), this.getClass().getName());
+        Asserts.isNotNull(service, "Unfound the specified service [%s] in the [%s] Plugin [%s], Check whether it is configured in the brick configuration file", name, cmd.getDomain(), this.getClass().getName());
         service.service(cmd);
     }
 
     public void persist(PluginCommand cmd) {
         String name = cmd.getName();
         Persist persist = getPersist(name);
-        Asserts.isNotNull(persist,
-                "Unfound the specified persist [%s] in the [%s] Plugin [%s], Check whether it is configured in the brick configuration file",
-                name, cmd.getDomain(), this.getClass().getName());
+        Asserts.isNotNull(persist, "Unfound the specified persist [%s] in the [%s] Plugin [%s], Check whether it is configured in the brick configuration file", name, cmd.getDomain(), this.getClass().getName());
         persist.persist(StubCommand.cast(cmd));
     }
 

@@ -46,16 +46,11 @@ public class PersistProxy extends BasePersist {
         if (table == null) {
             cmd.setTable(targetClass);
         }
-        String statement = Strings.join(true, ":", new String[] { operate,
-                cmd.getParameter(PluginConstants.PARAM_STATEMENT_ID) });
-        Object statementValue = cmd
-                .getParameter(PluginConstants.PARAM_STATEMENT_VALUE);
+        String statement = Strings.join(true, ":", new String[] { operate, cmd.getParameter(PluginConstants.PARAM_STATEMENT_ID) });
+        Object statementValue = cmd.getParameter(PluginConstants.PARAM_STATEMENT_VALUE);
         String persist = PluginCommand.getPersist(cmd);
         BoundMethod boundMethod;
-        if ((boundMethod = Reflects.getBoundMethod(targetClass,
-                persist)) == null
-                && (boundMethod = Reflects.getBoundMethod(targetClass,
-                        operate)) == null) {
+        if ((boundMethod = Reflects.getBoundMethod(targetClass, persist)) == null && (boundMethod = Reflects.getBoundMethod(targetClass, operate)) == null) {
             cmd.setCondition(statement);
         } else {
             Method method = boundMethod.getMethod();
@@ -67,8 +62,7 @@ public class PersistProxy extends BasePersist {
             String paramName;
             Object paramValue;
             for (int i = 0; i < size; i++) {
-                if (paramTypes[i].isInstance(cmd)
-                        && Command.class.isAssignableFrom(paramTypes[i])) {
+                if (paramTypes[i].isInstance(cmd) && Command.class.isAssignableFrom(paramTypes[i])) {
                     paramValue = cmd;
                 } else {
                     paramName = Helpers.getAliasName(annos[i]);
@@ -81,9 +75,7 @@ public class PersistProxy extends BasePersist {
                 }
                 params.add(paramValue);
             }
-            cmd.setCondition(new Object[] { statement,
-                    new Object[] { statementValue, values.toArray() },
-                    cmd.getParameter(PluginConstants.PARAM_STATEMENT_ARGS) });
+            cmd.setCondition(new Object[] { statement, new Object[] { statementValue, values.toArray() }, cmd.getParameter(PluginConstants.PARAM_STATEMENT_ARGS) });
             if (!(Reflects.isAbstract(method) || target instanceof Class)) {
                 try {
                     Object result = method.invoke(target, params.toArray());
@@ -92,8 +84,7 @@ public class PersistProxy extends BasePersist {
                     }
                     return;
                 } catch (Exception e) {
-                    throw new IllegalStateException(e.getMessage(),
-                            e.getCause());
+                    throw new IllegalStateException(e.getMessage(), e.getCause());
                 }
             }
         }

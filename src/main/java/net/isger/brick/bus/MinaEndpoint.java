@@ -106,13 +106,10 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         }
         /* 添加协议 */
         final ProtocolEncoder encoder = new ProtocolEncoderAdapter() {
-            public void encode(IoSession session, Object message,
-                    ProtocolEncoderOutput out) throws Exception {
+            public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
                 byte[] value = getProtocol().getEncoder().encode(message);
                 if (value != null && value.length > 0) {
-                    IoBuffer buf = IoBuffer
-                            .allocate(value.length + MAGIC.length)
-                            .setAutoExpand(true);
+                    IoBuffer buf = IoBuffer.allocate(value.length + MAGIC.length).setAutoExpand(true);
                     buf.put(MAGIC);
                     buf.putInt(value.length);
                     buf.put(value);
@@ -122,8 +119,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             }
         };
         final ProtocolDecoder decoder = new CumulativeProtocolDecoder() {
-            protected boolean doDecode(IoSession session, IoBuffer in,
-                    ProtocolDecoderOutput out) throws Exception {
+            protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
                 in.mark();
                 int size = correct(in);
                 if (size < 0) {
@@ -134,8 +130,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 }
                 byte[] content = new byte[size];
                 in.get(content);
-                Object message = getProtocol().getDecoder()
-                        .decode(new ByteArrayInputStream(content));
+                Object message = getProtocol().getDecoder().decode(new ByteArrayInputStream(content));
                 boolean result = message != null;
                 if (result) {
                     out.write(message);
@@ -144,60 +139,50 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             }
         };
         DefaultIoFilterChainBuilder chain = service.getFilterChain();
-        chain.addLast(getProtocolName(),
-                new ProtocolCodecFilter(new ProtocolCodecFactory() {
-                    public ProtocolEncoder getEncoder(IoSession session)
-                            throws Exception {
-                        return encoder;
-                    }
+        chain.addLast(getProtocolName(), new ProtocolCodecFilter(new ProtocolCodecFactory() {
+            public ProtocolEncoder getEncoder(IoSession session) throws Exception {
+                return encoder;
+            }
 
-                    public ProtocolDecoder getDecoder(IoSession session)
-                            throws Exception {
-                        return decoder;
-                    }
-                }));
+            public ProtocolDecoder getDecoder(IoSession session) throws Exception {
+                return decoder;
+            }
+        }));
         /* 设置处理器 */
         service.setHandler(new IoHandlerAdapter() {
             public void sessionOpened(IoSession session) throws Exception {
                 AuthIdentity identity = getIdentity(session);
                 /* 建立连接会话 */
                 if (identity == null) {
-                    AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
-                            new BaseToken(session.getId(), session));
+                    AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session));
                     cmd.setOperate(AuthCommand.OPERATE_LOGIN);
                     console.execute(cmd);
                     setIdentity(session, identity = cmd.getIdentity());
                     session.setAttribute(ATTR_LOCAL, true);
                 }
-                String clientIP = ((InetSocketAddress) session
-                        .getRemoteAddress()).getAddress().getHostAddress();
+                String clientIP = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
                 identity.setAttribute(ATTR_CLIENT_IP, clientIP);
                 identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout));
                 getHandler().open(MinaEndpoint.this, identity);
-                LOG.info("Session opened [{}] of {}", session.getId(),
-                        clientIP);
+                LOG.info("Session opened [{}] of {}", session.getId(), clientIP);
             }
 
-            public void messageReceived(IoSession session, Object message)
-                    throws Exception {
+            public void messageReceived(IoSession session, Object message) throws Exception {
                 AuthIdentity identity = getIdentity(session);
                 identity.active(autoSession); // 激活会话
-                message = getHandler().handle(MinaEndpoint.this, identity,
-                        message);
+                message = getHandler().handle(MinaEndpoint.this, identity, message);
                 if (message != null) {
                     session.write(message);
                 }
             }
 
-            public void sessionClosed(final IoSession session)
-                    throws Exception {
+            public void sessionClosed(final IoSession session) throws Exception {
                 executor.execute(new Runnable() {
                     public void run() {
                         AuthIdentity identity = getIdentity(session);
                         String clientIP;
                         try {
-                            clientIP = (String) identity
-                                    .getAttribute(ATTR_CLIENT_IP);
+                            clientIP = (String) identity.getAttribute(ATTR_CLIENT_IP);
                         } catch (Exception e) {
                             clientIP = e.getMessage();
                         }
@@ -206,18 +191,15 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                         } catch (Exception e) {
                         }
                         /* 注销连接会话 */
-                        if (Helpers
-                                .toBoolean(session.getAttribute(ATTR_LOCAL))) {
+                        if (Helpers.toBoolean(session.getAttribute(ATTR_LOCAL))) {
                             if (identity != null) {
-                                AuthCommand cmd = AuthHelper.toCommand(
-                                        Constants.SYSTEM, identity.getToken());
+                                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, identity.getToken());
                                 cmd.setIdentity(identity);
                                 cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
                                 console.execute(cmd);
                             }
                         }
-                        LOG.info("Session Closed [{}] of [{}]", session.getId(),
-                                clientIP);
+                        LOG.info("Session Closed [{}] of [{}]", session.getId(), clientIP);
                     }
                 });
             }

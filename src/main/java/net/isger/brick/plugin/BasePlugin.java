@@ -1,5 +1,6 @@
 package net.isger.brick.plugin;
 
+import java.util.Map;
 import java.util.Map.Entry;
 
 import net.isger.brick.plugin.persist.Persist;
@@ -24,7 +25,7 @@ public class BasePlugin extends AbstractPlugin {
         for (Persist persist : persists.values()) {
             container.inject(persist);
         }
-        for (Entry<String, Service> entry : services.entrySet()) {
+        for (Entry<String, Service> entry : getServices().entrySet()) {
             cmd = PluginCommand.mockAction();
             cmd.setName(entry.getKey());
             service = container.inject(entry.getValue());
@@ -36,6 +37,10 @@ public class BasePlugin extends AbstractPlugin {
         }
     }
 
+    public Map<String, Service> getServices() {
+        return services.gets();
+    }
+
     protected final Service getService(String name) {
         return services.get(name);
     }
@@ -45,7 +50,7 @@ public class BasePlugin extends AbstractPlugin {
     }
 
     public void destroy(PluginCommand cmd) {
-        for (Entry<String, Service> entry : services.entrySet()) {
+        for (Entry<String, Service> entry : getServices().entrySet()) {
             cmd.setName(entry.getKey());
             try {
                 entry.getValue().service(cmd);

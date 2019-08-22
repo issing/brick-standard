@@ -54,12 +54,11 @@ public class NettyInbound extends NettyEndpoint {
     protected final void bootstrap(ChannelInitializer<Channel> initializer) {
         this.loop = new NioEventLoopGroup();
         if (CHANNEL_UDP.equalsIgnoreCase(getChannel())) {
-            bootstrap = new Bootstrap().group(loop)
-                    .channelFactory(new ChannelFactory<Channel>() {
-                        public Channel newChannel() {
-                            return newDatagramChannel();
-                        }
-                    }).handler(initializer);
+            bootstrap = new Bootstrap().group(loop).channelFactory(new ChannelFactory<Channel>() {
+                public Channel newChannel() {
+                    return newDatagramChannel();
+                }
+            }).handler(initializer);
             bootstrap.localAddress(getAddress().getPort());
             bootstrap.option(ChannelOption.IP_MULTICAST_LOOP_DISABLED, false);
             bootstrap.option(ChannelOption.SO_REUSEADDR, true);
@@ -70,13 +69,11 @@ public class NettyInbound extends NettyEndpoint {
                 }
             };
         } else {
-            this.bootstrap = new ServerBootstrap()
-                    .group(loop, new NioEventLoopGroup())
-                    .channelFactory(new ChannelFactory<ServerChannel>() {
-                        public ServerChannel newChannel() {
-                            return newServerChannel();
-                        }
-                    }).childHandler(initializer);
+            this.bootstrap = new ServerBootstrap().group(loop, new NioEventLoopGroup()).channelFactory(new ChannelFactory<ServerChannel>() {
+                public ServerChannel newChannel() {
+                    return newServerChannel();
+                }
+            }).childHandler(initializer);
             bootstrap.localAddress(getAddress());
             channeler = new Handler() {
                 public Object handle(Object message) {
