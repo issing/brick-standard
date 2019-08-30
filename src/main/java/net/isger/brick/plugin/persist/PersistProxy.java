@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.core.Command;
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.plugin.PluginConstants;
@@ -61,9 +62,12 @@ public class PersistProxy extends BasePersist {
             int size = paramTypes.length;
             String paramName;
             Object paramValue;
+            AuthIdentity identity = cmd.getIdentity();
             for (int i = 0; i < size; i++) {
                 if (paramTypes[i].isInstance(cmd) && Command.class.isAssignableFrom(paramTypes[i])) {
                     paramValue = cmd;
+                } else if (paramTypes[i].isInstance(identity) && AuthIdentity.class.isAssignableFrom(paramTypes[i])) {
+                    paramValue = identity;
                 } else {
                     paramName = Helpers.getAliasName(annos[i]);
                     if (Strings.isEmpty(paramName)) {

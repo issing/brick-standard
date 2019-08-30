@@ -8,6 +8,7 @@ import net.isger.brick.plugin.service.Service;
 import net.isger.brick.plugin.service.Services;
 import net.isger.util.Helpers;
 import net.isger.util.Strings;
+import net.isger.util.reflect.BoundMethod;
 import net.isger.util.reflect.Standin;
 
 /**
@@ -229,7 +230,7 @@ public class PluginHelper extends CoreHelper {
                     shellCmd.setDomain(domain);
                 }
                 shellCmd.setName(Strings.isEmpty(name) ? Services.getName(clazz) : name);
-                String operate = method.getName();
+                String operate = BoundMethod.makeMethodDesc(method);
                 shellCmd.setOperate(operate);
                 Class<?>[] paramTypes = method.getParameterTypes();
                 Annotation[][] annos = method.getParameterAnnotations();
