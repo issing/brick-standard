@@ -129,9 +129,7 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public void insert(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
-            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
+    public void insert(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         PluginHelper.toConsole(cmd);
     }
 
@@ -143,9 +141,7 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public void delete(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
-            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
+    public void delete(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         PluginHelper.toConsole(cmd);
     }
 
@@ -157,9 +153,7 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public void update(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
-            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
+    public void update(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         PluginHelper.toConsole(cmd);
     }
 
@@ -170,12 +164,7 @@ public class CommonPersist extends PersistProxy {
      * @param values
      */
     @Ignore(mode = Mode.INCLUDE)
-    public Object select(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
-            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values,
-            @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args,
-            @Alias(PluginConstants.PARAM_BEAN) Object bean,
-            @Alias(PluginConstants.PARAM_PAGE) Page page) {
+    public Object select(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values, @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args, @Alias(PluginConstants.PARAM_BEAN) Object bean, @Alias(PluginConstants.PARAM_PAGE) Page page) {
         boolean isMultiple = Helpers.isMultiple(cmd.getTable());
         Object result = PluginHelper.toConsole(cmd);
         if (isMultiple) {
@@ -198,31 +187,24 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public Object single(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
-            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values,
-            @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args,
-            @Alias(PluginConstants.PARAM_BEAN) Object bean) {
+    public Object single(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values, @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args, @Alias(PluginConstants.PARAM_BEAN) Object bean) {
         boolean isMultiple = Helpers.isMultiple(cmd.getTable());
         cmd.setParameter(PluginConstants.PARAM_PAGE, null);
         Object result = PluginHelper.toConsole(cmd);
         if (isMultiple) {
             List<Object> pendings = new ArrayList<Object>();
             for (Object pending : (Object[]) result) {
-                pendings.add(Helpers.getInstance(
-                        toResult(cmd, bean, null, (Object[]) pending), 0));
+                pendings.add(Helpers.getInstance(toResult(cmd, bean, null, (Object[]) pending), 0));
             }
             result = pendings;
         } else {
-            result = Helpers.getInstance(
-                    toResult(cmd, bean, null, (Object[]) result), 0);
+            result = Helpers.getInstance(toResult(cmd, bean, null, (Object[]) result), 0);
         }
         return result;
     }
 
     @SuppressWarnings("unchecked")
-    private Object toResult(StubCommand cmd, Object bean, Page page,
-            Object[] grid) {
+    private Object toResult(StubCommand cmd, Object bean, Page page, Object[] grid) {
         Object result;
         Object value = grid[grid.length - 1];
         if (value instanceof Number) {
@@ -234,8 +216,7 @@ public class CommonPersist extends PersistProxy {
         Class<?> rawClass = Reflects.getClass(bean);
         if (rawClass == null || Map.class.isAssignableFrom(rawClass)) {
             result = Reflects.toList(grid);
-        } else if (String.class.isAssignableFrom(rawClass)
-                || Reflects.getPrimitiveClass(rawClass) != null) {
+        } else if (String.class.isAssignableFrom(rawClass) || Reflects.getPrimitiveClass(rawClass) != null) {
             result = Helpers.compact(grid[1]);
         } else if (Model.class.isAssignableFrom(rawClass)) {
             result = Reflects.toList(grid);
@@ -259,8 +240,7 @@ public class CommonPersist extends PersistProxy {
     }
 
     @SuppressWarnings("unchecked")
-    private Object toResult(final StubCommand cmd, Class<?> clazz,
-            Object[] grid) {
+    private Object toResult(final StubCommand cmd, Class<?> clazz, Object[] grid) {
         final Map<BoundField, ResultMeta> metas = new HashMap<BoundField, ResultMeta>();
         Object result = Reflects.toList(clazz, grid, new Callable<Object>() {
             public Object call(Object... args) {
@@ -275,23 +255,20 @@ public class CommonPersist extends PersistProxy {
                     switch (resultMeta.meta.getMode()) {
                     // 桥接模式处理
                     case Meta.MODE_BRIDGE:
-                        Helpers.toAppend(resultMeta.mapping,
-                                row.get(resultMeta.sourceField), args[1]);
+                        Helpers.toAppend(resultMeta.mapping, row.get(resultMeta.sourceField), args[1]);
                         break;
                     }
                 }
                 /* 内联数据 */
                 else {
-                    String fieldName = Helpers
-                            .toFieldName(resultMeta.sourceColumn);
+                    String fieldName = Strings.toFieldName(resultMeta.sourceColumn);
                     Object fieldValue = Helpers.getInstance(row, fieldName);
                     if (args[2] == Reflects.UNKNOWN) {
                         args[2] = fieldValue;
                     }
                     // 集合对象
                     else if (args[2] instanceof Map && fieldValue != args[2]) {
-                        ((Map<String, Object>) args[2])
-                                .put(resultMeta.sourceField, fieldValue);
+                        ((Map<String, Object>) args[2]).put(resultMeta.sourceField, fieldValue);
                     }
                     Helpers.toAppend(resultMeta.mapping, fieldValue, args[1]);
                 }
@@ -314,29 +291,20 @@ public class CommonPersist extends PersistProxy {
         if ((resultMeta.model = resultMeta.meta.toModel()) == null) {
             Class<?> rawClass = field.getToken().getRawClass();
             if (rawClass.isInterface()) {
-                rawClass = console.getContainer().getInstance(Class.class,
-                        (Helpers.toColumnName(rawClass.getSimpleName())
-                                .replaceAll("[_]", ".") + ".class")
-                                        .substring(1));
+                rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class").substring(1));
             }
             resultMeta.model = rawClass == null ? null : Model.create(rawClass);
             resultMeta.sourceColumn = resultMeta.meta.getName();
             resultMeta.targetColumn = (String) resultMeta.meta.getValue();
-            resultMeta.sourceField = Helpers
-                    .toFieldName(resultMeta.targetColumn);
+            resultMeta.sourceField = Strings.toFieldName(resultMeta.targetColumn);
         } else {
-            Map<String, Object> params = (Map<String, Object>) resultMeta.meta
-                    .getValue();
-            Map<String, Object> source = (Map<String, Object>) params
-                    .get("source");
+            Map<String, Object> params = (Map<String, Object>) resultMeta.meta.getValue();
+            Map<String, Object> source = (Map<String, Object>) params.get("source");
             resultMeta.sourceColumn = (String) source.get("name");
-            resultMeta.sourceField = Helpers
-                    .toFieldName((String) source.get("value"));
-            Map<String, Object> target = (Map<String, Object>) params
-                    .get("target");
+            resultMeta.sourceField = Strings.toFieldName((String) source.get("value"));
+            Map<String, Object> target = (Map<String, Object>) params.get("target");
             resultMeta.targetColumn = (String) target.get("value");
-            resultMeta.targetField = Helpers
-                    .toFieldName((String) target.get("name"));
+            resultMeta.targetField = Strings.toFieldName((String) target.get("name"));
         }
         resultMeta.model.metaEmpty();
         return resultMeta;
@@ -365,54 +333,40 @@ public class CommonPersist extends PersistProxy {
                         models.add(model = resultMeta.model.clone());
                         model.metaValue(resultMeta.sourceColumn, sourceKey); // 列值（源字段）
                     }
-                    Helpers.each(
-                            select(scmd, null, null, null, Map.class, null),
-                            new Callable<Void>() {
-                                public Void call(Object... args) {
-                                    Integer index = (Integer) args[0];
-                                    List<Map<String, Object>> values = (List<Map<String, Object>>) args[1];
-                                    Object[] outerArgs = (Object[]) args[2];
-                                    Model mapping = ((List<Model>) outerArgs[0])
-                                            .get(index);
-                                    ResultMeta outerMeta = (ResultMeta) outerArgs[1];
-                                    List<Object> instances = outerMeta.mapping
-                                            .get(mapping.metaValue(
-                                                    outerMeta.sourceColumn));
-                                    Object target;
-                                    for (Map<String, Object> value : values) {
-                                        target = value
-                                                .get(outerMeta.targetField);
-                                        Helpers.toAppend(targets, target,
-                                                instances, false);
-                                    }
-                                    return null;
-                                }
-                            }, models, resultMeta);
+                    Helpers.each(select(scmd, null, null, null, Map.class, null), new Callable<Void>() {
+                        public Void call(Object... args) {
+                            Integer index = (Integer) args[0];
+                            List<Map<String, Object>> values = (List<Map<String, Object>>) args[1];
+                            Object[] outerArgs = (Object[]) args[2];
+                            Model mapping = ((List<Model>) outerArgs[0]).get(index);
+                            ResultMeta outerMeta = (ResultMeta) outerArgs[1];
+                            List<Object> instances = outerMeta.mapping.get(mapping.metaValue(outerMeta.sourceColumn));
+                            Object target;
+                            for (Map<String, Object> value : values) {
+                                target = value.get(outerMeta.targetField);
+                                Helpers.toAppend(targets, target, instances, false);
+                            }
+                            return null;
+                        }
+                    }, models, resultMeta);
                 }
                 /* 获取元素类型 */
                 TypeToken<?> typeToken = field.getToken();
                 Class<?> rawClass = typeToken.getRawClass();
                 if (Collection.class.isAssignableFrom(rawClass)) {
-                    rawClass = (Class<?>) Reflects
-                            .getActualType(typeToken.getType());
+                    rawClass = (Class<?>) Reflects.getActualType(typeToken.getType());
                 } else if (rawClass.isArray()) {
-                    rawClass = (Class<?>) Reflects
-                            .getComponentType(typeToken.getType());
+                    rawClass = (Class<?>) Reflects.getComponentType(typeToken.getType());
                 }
                 if (rawClass.isInterface()) {
-                    rawClass = console.getContainer().getInstance(Class.class,
-                            (Helpers.toColumnName(rawClass.getSimpleName())
-                                    .replaceAll("[_]", ".") + ".class")
-                                            .substring(1));
+                    rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class").substring(1));
                 }
                 final Map<Object, List<Object>> pending = new HashMap<Object, List<Object>>();
                 /* 目标直接赋值（未配置目标列） */
                 if (Strings.isEmpty(resultMeta.targetColumn)) {
-                    for (Entry<Object, List<Object>> targetEntry : targets
-                            .entrySet()) {
+                    for (Entry<Object, List<Object>> targetEntry : targets.entrySet()) {
                         for (Object o : targetEntry.getValue()) {
-                            Helpers.toAppend(pending, o, targetEntry.getKey(),
-                                    false);
+                            Helpers.toAppend(pending, o, targetEntry.getKey(), false);
                         }
                     }
                 }
@@ -431,22 +385,19 @@ public class CommonPersist extends PersistProxy {
                         model.metaValue(resultMeta.targetColumn, targetKey); // 列值（目标字段）
                     }
                     if (models.size() > 0) {
-                        Helpers.each(single(scmd, null, null, null, rawClass),
-                                new Callable<Void>() {
-                                    public Void call(Object... args) {
-                                        Object instance = args[1];
-                                        Object[] outerArgs = (Object[]) args[2];
-                                        Object key = ((Meta) outerArgs[0])
-                                                .getValue(instance);
-                                        if (key != null) {
-                                            for (Object o : targets.get(key)) {
-                                                Helpers.toAppend(pending, o,
-                                                        instance, false);
-                                            }
-                                        }
-                                        return null;
+                        Helpers.each(single(scmd, null, null, null, rawClass), new Callable<Void>() {
+                            public Void call(Object... args) {
+                                Object instance = args[1];
+                                Object[] outerArgs = (Object[]) args[2];
+                                Object key = ((Meta) outerArgs[0]).getValue(instance);
+                                if (key != null) {
+                                    for (Object o : targets.get(key)) {
+                                        Helpers.toAppend(pending, o, instance, false);
                                     }
-                                }, targetModel.meta(resultMeta.targetColumn));
+                                }
+                                return null;
+                            }
+                        }, targetModel.meta(resultMeta.targetColumn));
                     }
                 }
                 /* 完成数据映射 */
@@ -455,8 +406,7 @@ public class CommonPersist extends PersistProxy {
                         public Object call(Object... args) {
                             Object instance = args[1];
                             Object[] outerArgs = (Object[]) args[2];
-                            ((BoundField) outerArgs[0]).setValue(instance,
-                                    outerArgs[1]);
+                            ((BoundField) outerArgs[0]).setValue(instance, outerArgs[1]);
                             return instance;
                         }
 
@@ -475,9 +425,7 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     @Ignore(mode = Mode.INCLUDE)
-    public boolean exists(StubCommand cmd,
-            @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode,
-            @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
+    public boolean exists(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values) {
         boolean result = true;
         try {
             PluginHelper.toConsole(cmd);
