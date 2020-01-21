@@ -39,8 +39,7 @@ public class PluginCommand extends GateCommand {
     }
 
     public static PluginCommand cast(BaseCommand cmd) {
-        return cmd == null || cmd.getClass() == PluginCommand.class ? (PluginCommand) cmd
-                : cmd.infect(new PluginCommand(false));
+        return cmd == null || cmd.getClass() == PluginCommand.class ? (PluginCommand) cmd : cmd.infect(new PluginCommand(false));
     }
 
     protected String getAccess() {
@@ -79,8 +78,7 @@ public class PluginCommand extends GateCommand {
         setPersist(this, name);
     }
 
-    public void setPersist(String name, Class<?> resultType,
-            Class<?>... argTypes) {
+    public void setPersist(String name, Class<?> resultType, Class<?>... argTypes) {
         setPersist(BoundMethod.makeMethodDesc(name, resultType, argTypes));
     }
 

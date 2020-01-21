@@ -291,7 +291,7 @@ public class CommonPersist extends PersistProxy {
         if ((resultMeta.model = resultMeta.meta.toModel()) == null) {
             Class<?> rawClass = field.getToken().getRawClass();
             if (rawClass.isInterface()) {
-                rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class").substring(1));
+                rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class"));
             }
             resultMeta.model = rawClass == null ? null : Model.create(rawClass);
             resultMeta.sourceColumn = resultMeta.meta.getName();
@@ -359,7 +359,7 @@ public class CommonPersist extends PersistProxy {
                     rawClass = (Class<?>) Reflects.getComponentType(typeToken.getType());
                 }
                 if (rawClass.isInterface()) {
-                    rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class").substring(1));
+                    rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class"));
                 }
                 final Map<Object, List<Object>> pending = new HashMap<Object, List<Object>>();
                 /* 目标直接赋值（未配置目标列） */

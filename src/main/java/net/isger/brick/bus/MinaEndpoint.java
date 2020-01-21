@@ -73,30 +73,6 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         executor = Executors.newCachedThreadPool();
     }
 
-    private int correct(IoBuffer in) {
-        byte value;
-        int index = 0;
-        for (;;) {
-            if (in.remaining() < DATA_MIN_LIMIT - index) {
-                return -1;
-            }
-            value = in.get();
-            if (value == MAGIC[index++]) {
-                if (index == MAGIC.length) {
-                    break;
-                }
-            } else {
-                in.mark();
-                index = 0;
-            }
-        }
-        int size = in.getInt();
-        if (size == 0) {
-            in.mark();
-        }
-        return in.remaining() >= size ? size : -1;
-    }
-
     protected void open() {
         super.open();
         service = createService();
@@ -204,6 +180,36 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 });
             }
         });
+    }
+
+    /**
+     * 数据纠正
+     *
+     * @param in
+     * @return
+     */
+    private int correct(IoBuffer in) {
+        byte value;
+        int index = 0;
+        for (;;) {
+            if (in.remaining() < DATA_MIN_LIMIT - index) {
+                return -1;
+            }
+            value = in.get();
+            if (value == MAGIC[index++]) {
+                if (index == MAGIC.length) {
+                    break;
+                }
+            } else {
+                in.mark();
+                index = 0;
+            }
+        }
+        int size = in.getInt();
+        if (size == 0) {
+            in.mark();
+        }
+        return in.remaining() >= size ? size : -1;
     }
 
     /**
