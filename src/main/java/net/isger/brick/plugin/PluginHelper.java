@@ -226,10 +226,13 @@ public class PluginHelper extends CoreHelper {
         final PluginCommand shellCmd = new PluginCommand(cmd);
         return new Standin<T>(clazz) {
             public Object action(Method method, Object[] args) {
+                String[] serviceName = Services.getName(clazz).split("[:]");
                 if (Strings.isNotEmpty(domain)) {
                     shellCmd.setDomain(domain);
+                } else if (serviceName.length > 1) {
+                    shellCmd.setDomain(serviceName[0]);
                 }
-                shellCmd.setName(Strings.isEmpty(name) ? Services.getName(clazz) : name);
+                shellCmd.setName(Strings.isEmpty(name) ? (serviceName.length > 1 ? serviceName[1] : serviceName[0]) : name);
                 String operate = BoundMethod.makeMethodDesc(method);
                 shellCmd.setOperate(operate);
                 Class<?>[] paramTypes = method.getParameterTypes();

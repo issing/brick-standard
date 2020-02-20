@@ -22,6 +22,7 @@ import net.isger.util.Strings;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
+import net.isger.util.reflect.AssemblerAdapter;
 import net.isger.util.reflect.BoundField;
 import net.isger.util.reflect.TypeToken;
 import net.isger.util.sql.Page;
@@ -242,35 +243,41 @@ public class CommonPersist extends PersistProxy {
     @SuppressWarnings("unchecked")
     private Object toResult(final StubCommand cmd, Class<?> clazz, Object[] grid) {
         final Map<BoundField, ResultMeta> metas = new HashMap<BoundField, ResultMeta>();
-        Object result = Reflects.toList(clazz, grid, new Callable<Object>() {
-            public Object call(Object... args) {
-                BoundField field = (BoundField) args[0];
+        Object result = Reflects.toList(clazz, grid, new AssemblerAdapter() {
+            public Class<?> assemble(Class<?> rawClass) {
+                if (rawClass.isInterface()) {
+                    rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class"));
+                }
+                return rawClass;
+            }
+
+            public Object assemble(BoundField field, Object instance, Object value, Object... args) {
                 ResultMeta resultMeta = metas.get(field);
                 if (resultMeta == null) {
                     metas.put(field, resultMeta = createResultMeta(cmd, field)); // 字段结果元数据
                 }
-                Map<String, Object> row = (Map<String, Object>) args[3]; // 行值
+                Map<String, Object> data = (Map<String, Object>) args[0]; // 行值
                 /* 引用数据 */
                 if (resultMeta.meta.isReference()) {
                     switch (resultMeta.meta.getMode()) {
                     // 桥接模式处理
                     case Meta.MODE_BRIDGE:
-                        Helpers.toAppend(resultMeta.mapping, row.get(resultMeta.sourceField), args[1]);
+                        Helpers.toAppend(resultMeta.mapping, data.get(resultMeta.sourceField), instance);
                         break;
                     }
                 }
                 /* 内联数据 */
                 else {
                     String fieldName = Strings.toFieldName(resultMeta.sourceColumn);
-                    Object fieldValue = Helpers.getInstance(row, fieldName);
-                    if (args[2] == Reflects.UNKNOWN) {
-                        args[2] = fieldValue;
+                    Object fieldValue = Helpers.getInstance(data, fieldName);
+                    if (value == Reflects.UNKNOWN) {
+                        value = fieldValue;
                     }
                     // 集合对象
-                    else if (args[2] instanceof Map && fieldValue != args[2]) {
-                        ((Map<String, Object>) args[2]).put(resultMeta.sourceField, fieldValue);
+                    else if (value instanceof Map && fieldValue != value) {
+                        ((Map<String, Object>) value).put(resultMeta.sourceField, fieldValue);
                     }
-                    Helpers.toAppend(resultMeta.mapping, fieldValue, args[1]);
+                    Helpers.toAppend(resultMeta.mapping, fieldValue, instance);
                 }
                 /* 初始置空 */
                 return null;

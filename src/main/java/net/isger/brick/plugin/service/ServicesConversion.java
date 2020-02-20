@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import net.isger.brick.util.ScanLoader;
 import net.isger.util.Reflects;
 import net.isger.util.Strings;
+import net.isger.util.reflect.ClassAssembler;
 import net.isger.util.reflect.conversion.Conversion;
 import net.isger.util.scan.ScanFilter;
 
@@ -42,8 +43,8 @@ public class ServicesConversion extends ScanLoader implements Conversion {
         return Services.class.isAssignableFrom(Reflects.getRawClass(type));
     }
 
-    public Object convert(Type type, Object res) {
-        return new Services(toList(load(res)));
+    public Object convert(Type type, Object res, ClassAssembler assembler) {
+        return new Services(toList(load(res, assembler)));
     }
 
     public String toString() {

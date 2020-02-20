@@ -7,6 +7,7 @@ import java.util.Map;
 import net.isger.brick.util.ScanLoader;
 import net.isger.util.Reflects;
 import net.isger.util.Strings;
+import net.isger.util.reflect.ClassAssembler;
 import net.isger.util.reflect.conversion.Conversion;
 import net.isger.util.scan.ScanFilter;
 
@@ -43,15 +44,15 @@ public class PersistsConversion extends ScanLoader implements Conversion {
         return Persists.class.isAssignableFrom(Reflects.getRawClass(type));
     }
 
-    public Object convert(Type type, Object res) {
-        return new Persists(toList(load(res)));
+    public Object convert(Type type, Object res, ClassAssembler assembler) {
+        return new Persists(toList(load(res, assembler)));
     }
 
-    protected Object make(Class<?> clazz, Map<String, Object> res) {
+    protected Object make(Class<?> clazz, Map<String, Object> res, ClassAssembler assembler) {
         if (Reflects.isAbstract(clazz)) {
             return new PersistProxy(clazz);
         }
-        return super.make(clazz, res);
+        return super.make(clazz, res, assembler);
     }
 
     public String toString() {

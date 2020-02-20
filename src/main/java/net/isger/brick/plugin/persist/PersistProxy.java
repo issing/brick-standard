@@ -6,16 +6,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.isger.brick.auth.AuthIdentity;
+import net.isger.brick.core.BaseCommand;
 import net.isger.brick.core.Command;
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.plugin.PluginConstants;
 import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
+import net.isger.util.Asserts;
 import net.isger.util.Helpers;
 import net.isger.util.Reflects;
 import net.isger.util.Strings;
 import net.isger.util.anno.Ignore;
 import net.isger.util.reflect.BoundMethod;
+import net.isger.util.reflect.Converter;
 
 /**
  * 持久代理
@@ -62,20 +65,12 @@ public class PersistProxy extends BasePersist {
             int size = paramTypes.length;
             String paramName;
             Object paramValue;
-            AuthIdentity identity = cmd.getIdentity();
             for (int i = 0; i < size; i++) {
-                if (paramTypes[i].isInstance(cmd) && Command.class.isAssignableFrom(paramTypes[i])) {
-                    paramValue = cmd;
-                } else if (paramTypes[i].isInstance(identity) && AuthIdentity.class.isAssignableFrom(paramTypes[i])) {
-                    paramValue = identity;
+                paramName = Helpers.getAliasName(annos[i]);
+                if (Strings.isEmpty(paramName)) {
+                    paramValue = getParameter(paramTypes[i], cmd, operate + i);
                 } else {
-                    paramName = Helpers.getAliasName(annos[i]);
-                    if (Strings.isEmpty(paramName)) {
-                        paramValue = cmd.getParameter(operate + i);
-                    } else {
-                        paramValue = cmd.getParameter(paramName);
-                        values.add(paramValue);
-                    }
+                    values.add(paramValue = getParameter(paramTypes[i], cmd, paramName));
                 }
                 params.add(paramValue);
             }
@@ -88,11 +83,38 @@ public class PersistProxy extends BasePersist {
                     }
                     return;
                 } catch (Exception e) {
-                    throw new IllegalStateException(e.getMessage(), e.getCause());
+                    throw Asserts.state(e.getMessage(), e.getCause());
                 }
             }
         }
         PluginHelper.toConsole(cmd);
         cmd.setTable(table);
     }
+
+    /**
+     * 获取类型参数
+     *
+     * @param type
+     * @param cmd
+     * @param name
+     * @return
+     */
+    @Ignore
+    protected Object getParameter(Class<?> type, BaseCommand cmd, String name) {
+        Object value;
+        AuthIdentity identity = cmd.getIdentity();
+        if (type.isInstance(cmd) && Command.class.isAssignableFrom(type)) {
+            value = cmd;
+        } else if (type.isInstance(identity) && AuthIdentity.class.isAssignableFrom(type)) {
+            value = identity;
+        } else {
+            // TODO 不完善（参考BaseScreen适配）
+            value = cmd.getParameter(name);
+            if (value != null && !type.isInstance(value)) {
+                value = Converter.convert(type, value);
+            }
+        }
+        return value;
+    }
+
 }

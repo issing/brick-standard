@@ -22,7 +22,7 @@
   <properties>
     <mybatis.version>3.4.0</mybatis.version>
 
-    <proxool.version>0.9.1</proxool.version>
+    <c3p0.version>0.9.5.5</c3p0.version>
     <redis.version>2.9.0</redis.version>
 
     <netty.version>4.1.17.Final</netty.version>
@@ -51,9 +51,9 @@
     </dependency>
     <!-- 存储依赖 -->
     <dependency>
-      <groupId>net.isger</groupId>
-      <artifactId>proxool</artifactId>
-      <version>${proxool.version}</version>
+      <groupId>com.mchange</groupId>
+      <artifactId>c3p0</artifactId>
+      <version>${c3p0.version}</version>
     </dependency>
     <dependency>
       <groupId>redis.clients</groupId>
