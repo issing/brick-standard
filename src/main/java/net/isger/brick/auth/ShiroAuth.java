@@ -23,8 +23,7 @@ public class ShiroAuth extends BaseAuth {
     protected AuthToken<?> login(AuthIdentity identity, AuthToken<?> token) {
         /* 访问令牌 */
         Object pending = identity.getToken();
-        if (!(pending instanceof ShiroToken
-                || ((pending = makeToken(token)) != null))) {
+        if (!(pending instanceof ShiroToken || ((pending = makeToken(token)) != null))) {
             return null;
         }
         /* 登录操作 */
@@ -41,8 +40,7 @@ public class ShiroAuth extends BaseAuth {
     private ShiroToken makeToken(Object token) {
         if (!(token instanceof ShiroToken)) {
             if (token instanceof AuthenticationToken) {
-                token = new ShiroToken(new AuthToken<AuthenticationToken>(
-                        (AuthenticationToken) token) {
+                token = new ShiroToken(new AuthToken<AuthenticationToken>((AuthenticationToken) token) {
                     public Object getPrincipal() {
                         return source.getPrincipal();
                     }
@@ -89,8 +87,7 @@ public class ShiroAuth extends BaseAuth {
             try {
                 ((ShiroToken) pending).getSubject().logout();
             } catch (Exception e) {
-                LOG.warn("Failure to logout [{}]", e.getMessage(),
-                        e.getCause());
+                LOG.warn("Failure to logout [{}]", e.getMessage(), e.getCause());
             }
         }
         super.logout(identity);
