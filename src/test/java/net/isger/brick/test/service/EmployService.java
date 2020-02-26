@@ -19,8 +19,7 @@ public class EmployService extends BaseService {
         System.out.println("EmployService.test(): " + test);
         PluginHelper.toPersist();
         if ("stub".equalsIgnoreCase(test)) {
-            System.out.println("EmployService.test() result: "
-                    + Reflects.toList((Object[]) cmd.getResult()));
+            System.out.println("EmployService.test() result: " + Reflects.toList((Object[]) cmd.getResult()));
         }
         cmd.setName("chain");
         cmd.setOperate("test");
