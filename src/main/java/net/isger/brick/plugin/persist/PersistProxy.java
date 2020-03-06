@@ -83,7 +83,7 @@ public class PersistProxy extends BasePersist {
                     }
                     return;
                 } catch (Exception e) {
-                    throw Asserts.state(e.getMessage(), e.getCause());
+                    throw e instanceof RuntimeException ? (RuntimeException) e : Asserts.state(e.getMessage(), e.getCause());
                 }
             }
         }
