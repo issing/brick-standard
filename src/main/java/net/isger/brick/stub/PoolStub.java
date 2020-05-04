@@ -5,7 +5,8 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import net.isger.util.Helpers;
 import net.isger.util.Strings;
@@ -17,36 +18,26 @@ public class PoolStub extends SqlStub {
     public DataSource getDataSource() {
         DataSource dataSource = super.getDataSource();
         if (dataSource == null) {
-            if (Strings.isEmpty(name)) {
-                Object value;
-                Properties props = new Properties();
-                for (Entry<String, Object> param : getParameters().entrySet()) {
-                    props.setProperty(param.getKey(), Strings.empty((value = param.getValue()) instanceof Number ? ((Number) value).intValue() : value));
-                }
-                ComboPooledDataSource source = new ComboPooledDataSource();
-                String driver = getDriverName();
-                if (!props.containsKey("driver")) {
-                    props.setProperty("driver", driver);
-                }
-                if (!props.containsKey("driverClass")) {
-                    props.setProperty("driverClass", driver);
-                }
-                String url = getUrl();
-                if (!props.containsKey("jdbc")) {
-                    props.setProperty("jdbc", url);
-                }
-                if (!props.containsKey("jdbcUrl")) {
-                    props.setProperty("jdbcUrl", url);
-                }
-                String user = getUser();
-                if (!props.containsKey("username")) {
-                    props.setProperty("username", user);
-                }
-                source.setProperties(props);
-                dataSource = source;
-            } else {
-                dataSource = new ComboPooledDataSource(name);
+            Properties props = new Properties();
+            Object value;
+            for (Entry<String, Object> param : getParameters().entrySet()) {
+                props.setProperty(param.getKey(), Strings.empty((value = param.getValue()) instanceof Number ? ((Number) value).intValue() : value));
             }
+            HikariConfig config;
+            if (Strings.isEmpty(name)) {
+                config = new HikariConfig();
+                config.addDataSourceProperty("cachePrepStmts", "true");
+                config.addDataSourceProperty("prepStmtCacheSize", "250");
+                config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            } else {
+                config = new HikariConfig(name.endsWith(".properties") ? name : name + ".properties");
+            }
+            config.setDataSourceProperties(props);
+            config.setDriverClassName(getDriverName());
+            config.setJdbcUrl(getUrl());
+            config.setUsername(getUser());
+            config.setPassword(getPassword());
+            dataSource = new HikariDataSource(config);
         }
         return dataSource;
     }

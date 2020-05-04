@@ -190,7 +190,7 @@ public class CommonPersist extends PersistProxy {
     @Ignore(mode = Mode.INCLUDE)
     public Object single(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values, @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args, @Alias(PluginConstants.PARAM_BEAN) Object bean) {
         boolean isMultiple = Helpers.isMultiple(cmd.getTable());
-        cmd.setParameter(PluginConstants.PARAM_PAGE, null);
+        PluginHelper.enablePage(cmd, false);
         Object result = PluginHelper.toConsole(cmd);
         if (isMultiple) {
             List<Object> pendings = new ArrayList<Object>();

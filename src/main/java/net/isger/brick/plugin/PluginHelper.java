@@ -3,6 +3,7 @@ package net.isger.brick.plugin;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
+import net.isger.brick.core.BaseCommand;
 import net.isger.brick.core.CoreHelper;
 import net.isger.brick.plugin.service.Service;
 import net.isger.brick.plugin.service.Services;
@@ -10,6 +11,7 @@ import net.isger.util.Helpers;
 import net.isger.util.Strings;
 import net.isger.util.reflect.BoundMethod;
 import net.isger.util.reflect.Standin;
+import net.isger.util.sql.Page;
 
 /**
  * 插件助手
@@ -249,6 +251,14 @@ public class PluginHelper extends CoreHelper {
                 return PluginHelper.toConsole(shellCmd);
             }
         }.getSource();
+    }
+
+    public static void enablePage(BaseCommand cmd, boolean enabled) {
+        cmd.setParameter(PluginConstants.PARAM_PAGE, enabled ? cmd.getParameter(Page.class) : null);
+    }
+
+    public static boolean isEnablePage(BaseCommand cmd) {
+        return cmd.getParameter(PluginConstants.PARAM_PAGE) instanceof Page;
     }
 
 }
