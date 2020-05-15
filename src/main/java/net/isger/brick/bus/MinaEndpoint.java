@@ -75,22 +75,24 @@ public abstract class MinaEndpoint extends SocketEndpoint {
 
     protected void open() {
         super.open();
+        /* 初始数据 */
         service = createService();
-        if (timeout == null) {
-            // 默认会话2分钟超时
-            timeout = 2;
+        if (timeout == null || timeout < 2) {
+            timeout = 2; // 默认会话2分钟超时
         }
+        timeout += 5; // 超时延迟5分钟作为过渡
         /* 添加协议 */
         final ProtocolEncoder encoder = new ProtocolEncoderAdapter() {
             public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
                 byte[] value = getProtocol().getEncoder().encode(message);
                 if (value != null && value.length > 0) {
-                    IoBuffer buf = IoBuffer.allocate(value.length + MAGIC.length).setAutoExpand(true);
+                    IoBuffer buf = IoBuffer.allocate(value.length + DATA_MIN_LIMIT).setAutoExpand(true);
                     buf.put(MAGIC);
                     buf.putInt(value.length);
                     buf.put(value);
                     buf.flip();
                     out.write(buf);
+                    out.flush();
                 }
             }
         };
@@ -128,24 +130,12 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         service.setHandler(new IoHandlerAdapter() {
             public void sessionOpened(IoSession session) throws Exception {
                 AuthIdentity identity = getIdentity(session);
-                /* 建立连接会话 */
-                if (identity == null) {
-                    AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session));
-                    cmd.setOperate(AuthCommand.OPERATE_LOGIN);
-                    console.execute(cmd);
-                    setIdentity(session, identity = cmd.getIdentity());
-                    session.setAttribute(ATTR_LOCAL, true);
-                }
-                String clientIP = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
-                identity.setAttribute(ATTR_CLIENT_IP, clientIP);
-                identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout));
                 getHandler().open(MinaEndpoint.this, identity);
-                LOG.info("Session opened [{}] of {}", session.getId(), clientIP);
+                LOG.info("Session opened [{}] of [{}]", session.getId(), identity.getAttribute(ATTR_CLIENT_IP));
             }
 
             public void messageReceived(IoSession session, Object message) throws Exception {
                 AuthIdentity identity = getIdentity(session);
-                identity.active(autoSession); // 激活会话
                 message = getHandler().handle(MinaEndpoint.this, identity, message);
                 if (message != null) {
                     session.write(message);
@@ -245,7 +235,29 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      * @return
      */
     protected AuthIdentity getIdentity(IoSession session) {
-        return (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
+        AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
+        /* 建立连接会话 */
+        if (identity == null) {
+            AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session));
+            cmd.setOperate(AuthCommand.OPERATE_LOGIN);
+            console.execute(cmd);
+            setIdentity(session, identity = cmd.getIdentity()); // 保存会话身份
+            session.setAttribute(ATTR_LOCAL, true);
+            String clientIP = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
+            identity.setAttribute(ATTR_CLIENT_IP, clientIP);
+            identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout)); // 设置超时
+            getHandler().reload(this, identity);
+        } else {
+            try {
+                identity.active(autoSession); // 激活会话
+            } catch (Exception e) {
+                LOG.warn("Failure to active session identity: {}", e.getMessage(), e.getCause());
+                getHandler().unload(this, identity);
+                setIdentity(session, null);
+                identity = getIdentity(session);
+            }
+        }
+        return identity;
     }
 
     protected void close() {

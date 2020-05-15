@@ -38,8 +38,7 @@ public class ShiroRealm extends AuthorizingRealm {
         return token instanceof ShiroToken;
     }
 
-    protected AuthorizationInfo doGetAuthorizationInfo(
-            PrincipalCollection principals) {
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
         AuthCommand cmd = AuthCommand.newAction();
         cmd.setOperate(AuthCommand.OPERATE_AUTH);
         List<?> token = principals.asList();
@@ -61,8 +60,7 @@ public class ShiroRealm extends AuthorizingRealm {
                 addAuthInfo(info, (AuthInfo) cmd.getResult());
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Failure to get authorization info",
-                    e);
+            throw new IllegalStateException("Failure to get authorization info", e);
         }
         return info;
     }
@@ -72,10 +70,8 @@ public class ShiroRealm extends AuthorizingRealm {
         info.addStringPermissions(authInfo.getPermissions());
     }
 
-    protected AuthenticationInfo doGetAuthenticationInfo(
-            AuthenticationToken token) throws AuthenticationException {
-        return new SimpleAuthenticationInfo(token.getPrincipal(),
-                token.getCredentials(), getName());
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+        return new SimpleAuthenticationInfo(token.getPrincipal(), token.getCredentials(), getName());
     }
 
 }

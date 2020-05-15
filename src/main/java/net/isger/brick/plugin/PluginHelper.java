@@ -189,7 +189,7 @@ public class PluginHelper extends CoreHelper {
      */
     public static Object toPersists(PluginCommand cmd, String operate, String persist, String statement, Object value, Object... args) {
         cmd.setParameter(PluginConstants.PARAM_STATEMENT_ARGS, args);
-        return toPersists(cmd, operate, persist, statement, value);
+        return toPersist(cmd, operate, persist, statement, value);
     }
 
     /**

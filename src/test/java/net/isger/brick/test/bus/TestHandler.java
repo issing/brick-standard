@@ -13,6 +13,9 @@ public class TestHandler implements IdentityHandler {
     public void open(Endpoint endpoint, AuthIdentity identity) {
     }
 
+    public void reload(Endpoint endpoint, AuthIdentity identity) {
+    }
+
     public Object handle(Object message) {
         System.out.println(prefix + ": " + message);
         if (++amount == 10) {
@@ -21,9 +24,11 @@ public class TestHandler implements IdentityHandler {
         return message;
     }
 
-    public Object handle(Endpoint endpoint, AuthIdentity identity,
-            Object message) {
+    public Object handle(Endpoint endpoint, AuthIdentity identity, Object message) {
         return handle(message);
+    }
+
+    public void unload(Endpoint endpoint, AuthIdentity identity) {
     }
 
     public void close(Endpoint endpoint, AuthIdentity identity) {
