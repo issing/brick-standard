@@ -29,6 +29,7 @@ import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.BaseToken;
 import net.isger.brick.core.Console;
 import net.isger.util.Helpers;
+import net.isger.util.Strings;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
@@ -135,7 +136,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             }
 
             public void messageReceived(IoSession session, Object message) throws Exception {
-                AuthIdentity identity = getIdentity(session);
+                AuthIdentity identity = getIdentity(session); // 会话失效时，身份为新建实例（空数据）
                 message = getHandler().handle(MinaEndpoint.this, identity, message);
                 if (message != null) {
                     session.write(message);
@@ -146,12 +147,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 executor.execute(new Runnable() {
                     public void run() {
                         AuthIdentity identity = getIdentity(session);
-                        String clientIP;
-                        try {
-                            clientIP = (String) identity.getAttribute(ATTR_CLIENT_IP);
-                        } catch (Exception e) {
-                            clientIP = e.getMessage();
-                        }
+                        String clientIP = Strings.empty(identity.getAttribute(ATTR_CLIENT_IP), ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress());
                         try {
                             getHandler().close(MinaEndpoint.this, identity);
                         } catch (Exception e) {
@@ -219,6 +215,45 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     }
 
     /**
+     * 获取会话身份
+     *
+     * @param session
+     * @return
+     */
+    protected AuthIdentity getIdentity(IoSession session) {
+        synchronized (session) {
+            AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
+            /* 激活会话身份 */
+            active: if (identity == null) {
+                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session));
+                cmd.setOperate(AuthCommand.OPERATE_LOGIN);
+                console.execute(cmd);
+                setIdentity(session, identity = cmd.getIdentity()); // 保存会话身份
+                session.setAttribute(ATTR_LOCAL, true);
+                String clientIp = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
+                identity.setAttribute(ATTR_CLIENT_IP, clientIp);
+                identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout)); // 设置超时
+                getHandler().reload(this, identity);
+            } else {
+                try {
+                    identity.active(autoSession); // 激活会话
+                    break active;
+                } catch (Exception e) {
+                    LOG.warn("Failure to active session identity: {}", e.getMessage(), e.getCause());
+                }
+                try {
+                    getHandler().unload(this, identity); // 卸载会话
+                } catch (Exception e) {
+                    LOG.warn("Failure to unload session identity: {}", e.getMessage(), e.getCause());
+                }
+                setIdentity(session, null);
+                identity = getIdentity(session);
+            }
+            return identity;
+        }
+    }
+
+    /**
      * 设置会话身份
      *
      * @param session
@@ -226,38 +261,6 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      */
     protected void setIdentity(IoSession session, AuthIdentity identity) {
         session.setAttribute(ATTR_IDENTITY, identity);
-    }
-
-    /**
-     * 获取会话身份
-     *
-     * @param session
-     * @return
-     */
-    protected AuthIdentity getIdentity(IoSession session) {
-        AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
-        /* 建立连接会话 */
-        if (identity == null) {
-            AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session));
-            cmd.setOperate(AuthCommand.OPERATE_LOGIN);
-            console.execute(cmd);
-            setIdentity(session, identity = cmd.getIdentity()); // 保存会话身份
-            session.setAttribute(ATTR_LOCAL, true);
-            String clientIP = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
-            identity.setAttribute(ATTR_CLIENT_IP, clientIP);
-            identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout)); // 设置超时
-            getHandler().reload(this, identity);
-        } else {
-            try {
-                identity.active(autoSession); // 激活会话
-            } catch (Exception e) {
-                LOG.warn("Failure to active session identity: {}", e.getMessage(), e.getCause());
-                getHandler().unload(this, identity);
-                setIdentity(session, null);
-                identity = getIdentity(session);
-            }
-        }
-        return identity;
     }
 
     protected void close() {
