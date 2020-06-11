@@ -1,6 +1,5 @@
 package net.isger.brick.bus;
 
-import java.io.IOException;
 import java.net.SocketAddress;
 
 import org.apache.mina.core.service.IoAcceptor;
@@ -36,16 +35,17 @@ public class MinaInbound extends MinaEndpoint {
         IoAcceptor acceptor = (IoAcceptor) getService();
         /* 绑定服务端口 */
         SocketAddress address = getAddress();
+        LOG.info("Listening [{}://{}]", getProtocolName(), address);
         try {
-            if (LOG.isDebugEnabled()) {
-                LOG.info("Listening [{}://{}]", getProtocolName(), address);
-            }
             acceptor.bind(address);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw Asserts.state("Failure to bind [%s]", address, e);
         }
     }
 
+    /**
+     * 创建入端服务
+     */
     protected IoAcceptor createService() {
         if ("udp".equalsIgnoreCase(getChannel())) {
             return new NioDatagramAcceptor();
@@ -53,6 +53,12 @@ public class MinaInbound extends MinaEndpoint {
         return new NioSocketAcceptor();
     }
 
+    /**
+     * 获取服务会话
+     *
+     * @param cmd
+     * @return
+     */
     protected IoSession getSession(BusCommand cmd) {
         AuthIdentity identity = cmd.getIdentity();
         AuthToken<?> token = identity.getToken();
@@ -65,6 +71,11 @@ public class MinaInbound extends MinaEndpoint {
         return null;
     }
 
+    /**
+     * 发送服务报文
+     *
+     * @param cmd
+     */
     public void send(BusCommand cmd) {
         Object payload = cmd.getPayload();
         IoSession session;

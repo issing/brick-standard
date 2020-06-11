@@ -87,12 +87,12 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
                 byte[] value = getProtocol().getEncoder().encode(message);
                 if (value != null && value.length > 0) {
-                    IoBuffer buf = IoBuffer.allocate(value.length + DATA_MIN_LIMIT).setAutoExpand(true);
-                    buf.put(MAGIC);
-                    buf.putInt(value.length);
-                    buf.put(value);
-                    buf.flip();
-                    out.write(buf);
+                    IoBuffer buffer = IoBuffer.allocate(value.length + DATA_MIN_LIMIT).setAutoExpand(true);
+                    buffer.put(MAGIC);
+                    buffer.putInt(value.length);
+                    buffer.put(value);
+                    buffer.flip();
+                    out.write(buffer);
                     out.flush();
                 }
             }
@@ -100,7 +100,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         final ProtocolDecoder decoder = new CumulativeProtocolDecoder() {
             protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
                 in.mark();
-                int size = correct(in);
+                int size = MinaEndpoint.this.correct(in);
                 if (size < 0) {
                     in.reset();
                     return false;
@@ -147,7 +147,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 executor.execute(new Runnable() {
                     public void run() {
                         AuthIdentity identity = getIdentity(session);
-                        String clientIP = Strings.empty(identity.getAttribute(ATTR_CLIENT_IP), ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress());
+                        String clientIP = Strings.empty(identity.getAttribute(ATTR_CLIENT_IP), "?");
                         try {
                             getHandler().close(MinaEndpoint.this, identity);
                         } catch (Exception e) {
@@ -215,7 +215,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     }
 
     /**
-     * 获取会话身份
+     * 获取身份
      *
      * @param session
      * @return
@@ -225,29 +225,28 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
             /* 激活会话身份 */
             active: if (identity == null) {
-                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session));
+                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session)); // 默认系统会话身份（令牌为通信链路会话）
                 cmd.setOperate(AuthCommand.OPERATE_LOGIN);
                 console.execute(cmd);
-                setIdentity(session, identity = cmd.getIdentity()); // 保存会话身份
+                setIdentity(session, identity = cmd.getIdentity()); // 保存身份
                 session.setAttribute(ATTR_LOCAL, true);
-                String clientIp = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
-                identity.setAttribute(ATTR_CLIENT_IP, clientIp);
+                identity.setAttribute(ATTR_CLIENT_IP, ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress());
                 identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout)); // 设置超时
                 getHandler().reload(this, identity);
             } else {
                 try {
-                    identity.active(autoSession); // 激活会话
+                    identity.active(autoSession); // 激活身份
                     break active;
                 } catch (Exception e) {
-                    LOG.warn("Failure to active session identity: {}", e.getMessage(), e.getCause());
+                    LOG.warn("(!) Failure to active session identity - {}", e.getMessage(), e.getCause());
                 }
                 try {
-                    getHandler().unload(this, identity); // 卸载会话
+                    getHandler().unload(this, identity); // 卸载身份
                 } catch (Exception e) {
-                    LOG.warn("Failure to unload session identity: {}", e.getMessage(), e.getCause());
+                    LOG.warn("(!) Failure to unload session identity - {}", e.getMessage(), e.getCause());
                 }
-                setIdentity(session, null);
-                identity = getIdentity(session);
+                setIdentity(session, null); // 删除身份
+                identity = getIdentity(session); // 重新获取
             }
             return identity;
         }
