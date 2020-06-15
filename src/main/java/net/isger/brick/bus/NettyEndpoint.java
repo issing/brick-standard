@@ -34,11 +34,9 @@ import net.isger.util.anno.Ignore.Mode;
 @Ignore
 public abstract class NettyEndpoint extends SocketEndpoint {
 
-    private static final AttributeKey<AuthIdentity> ATTR_IDENTITY = AttributeKey
-            .valueOf("brick.bus.netty.channel.identity");
+    private static final AttributeKey<AuthIdentity> ATTR_IDENTITY = AttributeKey.valueOf("brick.bus.netty.channel.identity");
 
-    private static final AttributeKey<Boolean> ATTR_IDENTITY_LOCAL = AttributeKey
-            .valueOf("brick.bus.netty.channel.identity.local");
+    private static final AttributeKey<Boolean> ATTR_IDENTITY_LOCAL = AttributeKey.valueOf("brick.bus.netty.channel.identity.local");
 
     /** 控制台 */
     @Ignore(mode = Mode.INCLUDE)
@@ -51,8 +49,10 @@ public abstract class NettyEndpoint extends SocketEndpoint {
     private Bus bus;
 
     @Ignore(mode = Mode.INCLUDE)
-    @Alias("session.create")
-    private boolean createSession;
+    private boolean autoSession;
+
+    @Ignore(mode = Mode.INCLUDE)
+    private Integer timeout;
 
     public NettyEndpoint() {
     }
@@ -66,9 +66,7 @@ public abstract class NettyEndpoint extends SocketEndpoint {
         /* 初始协议 */
         final ChannelOutboundHandler encoder = new NettyEncoder();
         NettyDecoder pendingDecoder = new NettyDecoder();
-        final ChannelInboundHandler decoder = CHANNEL_TCP
-                .equalsIgnoreCase(getChannel()) ? pendingDecoder
-                        : new DatagramPacketDecoder(pendingDecoder);
+        final ChannelInboundHandler decoder = CHANNEL_TCP.equalsIgnoreCase(getChannel()) ? pendingDecoder : new DatagramPacketDecoder(pendingDecoder);
         /* 初始处理 */
         final ChannelInboundHandler handler = new NettyHandler();
 
@@ -108,8 +106,7 @@ public abstract class NettyEndpoint extends SocketEndpoint {
         context.channel().writeAndFlush(message);
     }
 
-    protected void setIdentity(ChannelHandlerContext context,
-            AuthIdentity identity) {
+    protected void setIdentity(ChannelHandlerContext context, AuthIdentity identity) {
         context.channel().attr(ATTR_IDENTITY).setIfAbsent(identity);
     }
 
@@ -123,8 +120,7 @@ public abstract class NettyEndpoint extends SocketEndpoint {
 
     @Sharable
     private class NettyEncoder extends MessageToByteEncoder<Object> {
-        protected void encode(ChannelHandlerContext ctx, Object message,
-                ByteBuf out) throws Exception {
+        protected void encode(ChannelHandlerContext context, Object message, ByteBuf out) throws Exception {
             byte[] value = getProtocol().getEncoder().encode(message);
             if (value != null) {
                 out.writeBytes(value);
@@ -134,10 +130,8 @@ public abstract class NettyEndpoint extends SocketEndpoint {
 
     @Sharable
     private class NettyDecoder extends MessageToMessageDecoder<ByteBuf> {
-        protected void decode(ChannelHandlerContext ctx, ByteBuf in,
-                List<Object> out) throws Exception {
-            Object message = getProtocol().getDecoder()
-                    .decode(new ByteBufInputStream(in));
+        protected void decode(ChannelHandlerContext context, ByteBuf in, List<Object> out) throws Exception {
+            Object message = getProtocol().getDecoder().decode(new ByteBufInputStream(in));
             if (message != null) {
                 out.add(message);
             }
@@ -146,38 +140,33 @@ public abstract class NettyEndpoint extends SocketEndpoint {
 
     @Sharable
     private class NettyHandler extends ChannelInboundHandlerAdapter {
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            super.channelActive(ctx);
+        public void channelActive(ChannelHandlerContext context) throws Exception {
+            super.channelActive(context);
             /* 初始连接会话 */
-            if (getIdentity(ctx) == null) {
-                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
-                        new BaseToken(ctx, ctx));
+            if (getIdentity(context) == null) {
+                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(context, context));
                 cmd.setOperate(AuthCommand.OPERATE_LOGIN);
                 console.execute(cmd);
-                setIdentity(ctx, cmd.getIdentity());
-                ctx.channel().attr(ATTR_IDENTITY_LOCAL).set(true);
+                setIdentity(context, cmd.getIdentity());
+                context.channel().attr(ATTR_IDENTITY_LOCAL).set(true);
             }
         }
 
-        public void channelRead(ChannelHandlerContext ctx, Object message)
-                throws Exception {
-            AuthIdentity identity = getIdentity(ctx);
-            identity.active(createSession); // 激活会话
+        public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
+            AuthIdentity identity = getIdentity(context);
+            identity.active(autoSession); // 激活会话
             message = receive(identity, message);
             if (message != null) {
-                send(ctx, message);
+                send(context, message);
             }
         }
 
-        public void channelInactive(ChannelHandlerContext ctx)
-                throws Exception {
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             /* 注销连接会话 */
-            if (Helpers
-                    .toBoolean(ctx.channel().attr(ATTR_IDENTITY_LOCAL).get())) {
+            if (Helpers.toBoolean(ctx.channel().attr(ATTR_IDENTITY_LOCAL).get())) {
                 AuthIdentity identity = getIdentity(ctx);
                 if (identity != null) {
-                    AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM,
-                            identity.getToken());
+                    AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, identity.getToken());
                     cmd.setIdentity(identity);
                     cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
                     console.execute(cmd);

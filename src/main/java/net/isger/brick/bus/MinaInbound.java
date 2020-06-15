@@ -10,9 +10,15 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.isger.brick.Constants;
 import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.AuthToken;
+import net.isger.brick.core.Console;
 import net.isger.util.Asserts;
+import net.isger.util.Helpers;
+import net.isger.util.anno.Alias;
+import net.isger.util.anno.Ignore;
+import net.isger.util.anno.Ignore.Mode;
 
 /**
  * MINA入端
@@ -27,6 +33,11 @@ public class MinaInbound extends MinaEndpoint {
         LOG = LoggerFactory.getLogger(MinaInbound.class);
     }
 
+    /** 控制台 */
+    @Ignore(mode = Mode.INCLUDE)
+    @Alias(Constants.SYSTEM)
+    private Console console;
+
     /**
      * 打开服务端口
      */
@@ -35,9 +46,13 @@ public class MinaInbound extends MinaEndpoint {
         IoAcceptor acceptor = (IoAcceptor) getService();
         /* 绑定服务端口 */
         SocketAddress address = getAddress();
-        LOG.info("Listening [{}://{}]", getProtocolName(), address);
         try {
+            /* 等待控制台就绪 */
+            while (!console.hasReady()) {
+                Helpers.sleep(200l);
+            }
             acceptor.bind(address);
+            LOG.info("Listening [{}://{}]", getProtocolName(), address);
         } catch (Exception e) {
             throw Asserts.state("Failure to bind [%s]", address, e);
         }

@@ -52,7 +52,7 @@ public class NettyInbound extends NettyEndpoint {
     }
 
     protected final void bootstrap(ChannelInitializer<Channel> initializer) {
-        this.loop = new NioEventLoopGroup();
+        loop = new NioEventLoopGroup();
         if (CHANNEL_UDP.equalsIgnoreCase(getChannel())) {
             bootstrap = new Bootstrap().group(loop).channelFactory(new ChannelFactory<Channel>() {
                 public Channel newChannel() {
@@ -69,7 +69,7 @@ public class NettyInbound extends NettyEndpoint {
                 }
             };
         } else {
-            this.bootstrap = new ServerBootstrap().group(loop, new NioEventLoopGroup()).channelFactory(new ChannelFactory<ServerChannel>() {
+            bootstrap = new ServerBootstrap().group(loop, new NioEventLoopGroup()).channelFactory(new ChannelFactory<ServerChannel>() {
                 public ServerChannel newChannel() {
                     return newServerChannel();
                 }

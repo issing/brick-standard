@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.isger.brick.auth.AuthIdentity;
+import net.isger.util.Helpers;
 import net.isger.util.anno.Ignore;
 
 public class MinaOutbound extends MinaEndpoint {
@@ -40,17 +41,12 @@ public class MinaOutbound extends MinaEndpoint {
         IoSession session = sessions.get(identityId);
         if (session == null || session.isClosing()) {
             SocketAddress address = getAddress();
-            ConnectFuture future = ((SocketConnector) getService())
-                    .connect(address);
+            ConnectFuture future = ((SocketConnector) getService()).connect(address);
             do {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                }
+                Helpers.sleep(100l);
                 session = future.getSession();
                 if (session != null) {
-                    LOG.info("Connected to [{}://{}]", getProtocolName(),
-                            address);
+                    LOG.info("Connected to [{}://{}]", getProtocolName(), address);
                     sessions.put(identityId, session);
                     setIdentity(session, identity);
                     break;
