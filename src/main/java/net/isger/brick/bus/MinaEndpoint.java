@@ -221,6 +221,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      * @return
      */
     protected AuthIdentity getIdentity(IoSession session) {
+        String address = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
         synchronized (session) {
             AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
             /* 激活会话身份 */
@@ -230,12 +231,13 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 console.execute(cmd);
                 setIdentity(session, identity = cmd.getIdentity()); // 保存身份
                 session.setAttribute(ATTR_LOCAL, true);
-                identity.setAttribute(ATTR_CLIENT_IP, ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress());
                 identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout)); // 设置超时
+                identity.setAttribute(ATTR_CLIENT_IP, address);
                 getHandler().reload(this, identity);
             } else {
                 try {
                     identity.active(autoSession); // 激活身份
+                    identity.setAttribute(ATTR_CLIENT_IP, address);
                     break active;
                 } catch (Exception e) {
                     LOG.warn("(!) Failure to active session identity - {}", e.getMessage(), e.getCause());
