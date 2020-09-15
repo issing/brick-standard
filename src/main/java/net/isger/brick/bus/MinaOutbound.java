@@ -48,7 +48,6 @@ public class MinaOutbound extends MinaEndpoint {
                 if (session != null) {
                     LOG.info("Connected to [{}://{}]", getProtocolName(), address);
                     sessions.put(identityId, session);
-                    setIdentity(session, identity);
                     break;
                 }
             } while (!Thread.interrupted());

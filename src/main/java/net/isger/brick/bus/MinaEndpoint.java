@@ -2,12 +2,13 @@ package net.isger.brick.bus;
 
 import java.io.ByteArrayInputStream;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.mina.core.buffer.IoBuffer;
-import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.service.IoService;
 import org.apache.mina.core.session.IoSession;
@@ -28,8 +29,6 @@ import net.isger.brick.auth.AuthHelper;
 import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.BaseToken;
 import net.isger.brick.core.Console;
-import net.isger.util.Helpers;
-import net.isger.util.Strings;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
@@ -40,10 +39,6 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     private static final byte[] MAGIC = "BRICK".getBytes();
 
     private static final int DATA_MIN_LIMIT = MAGIC.length + Integer.SIZE / 8;
-
-    private static final String ATTR_IDENTITY = "brick.bus.mina.session.identity";
-
-    private static final String ATTR_LOCAL = "brick.bus.mina.session.local";
 
     private static final Logger LOG;
 
@@ -64,14 +59,17 @@ public abstract class MinaEndpoint extends SocketEndpoint {
 
     private IoService service;
 
+    private ExecutorService executor;
+
+    private Map<Long, AuthIdentity> identities;
+
     static {
         LOG = LoggerFactory.getLogger(MinaEndpoint.class);
     }
 
-    private ExecutorService executor;
-
     public MinaEndpoint() {
         executor = Executors.newCachedThreadPool();
+        identities = new HashMap<Long, AuthIdentity>();
     }
 
     protected void open() {
@@ -105,6 +103,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                     in.reset();
                     return false;
                 } else if (size == 0) {
+                    in.mark();
                     return true;
                 }
                 byte[] content = new byte[size];
@@ -117,8 +116,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 return result;
             }
         };
-        DefaultIoFilterChainBuilder chain = service.getFilterChain();
-        chain.addLast(getProtocolName(), new ProtocolCodecFilter(new ProtocolCodecFactory() {
+        service.getFilterChain().addLast(getProtocolName(), new ProtocolCodecFilter(new ProtocolCodecFactory() {
             public ProtocolEncoder getEncoder(IoSession session) throws Exception {
                 return encoder;
             }
@@ -132,7 +130,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             public void sessionOpened(IoSession session) throws Exception {
                 AuthIdentity identity = getIdentity(session);
                 getHandler().open(MinaEndpoint.this, identity);
-                LOG.info("Session opened [{}] of [{}]", session.getId(), identity.getAttribute(ATTR_CLIENT_IP));
+                LOG.info("Session [{}] opened of [{}]", session.getId(), identity.getAttribute(ATTR_CLIENT_IP));
             }
 
             public void messageReceived(IoSession session, Object message) throws Exception {
@@ -147,21 +145,19 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 executor.execute(new Runnable() {
                     public void run() {
                         AuthIdentity identity = getIdentity(session);
-                        String clientIP = Strings.empty(identity.getAttribute(ATTR_CLIENT_IP), "?");
                         try {
                             getHandler().close(MinaEndpoint.this, identity);
+                            /* 注销连接会话 */
+                            AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, identity.getToken());
+                            cmd.setIdentity(identity);
+                            cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
+                            console.execute(cmd);
                         } catch (Exception e) {
+                            LOG.warn("(!) Disconnect session exception - {}", e.getMessage(), e.getCause());
+                        } finally {
+                            identities.remove(session.getId());
                         }
-                        /* 注销连接会话 */
-                        if (Helpers.toBoolean(session.getAttribute(ATTR_LOCAL))) {
-                            if (identity != null) {
-                                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, identity.getToken());
-                                cmd.setIdentity(identity);
-                                cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
-                                console.execute(cmd);
-                            }
-                        }
-                        LOG.info("Session Closed [{}] of [{}]", session.getId(), clientIP);
+                        LOG.info("Session [{}] Closed", session.getId());
                     }
                 });
             }
@@ -192,9 +188,6 @@ public abstract class MinaEndpoint extends SocketEndpoint {
             }
         }
         int size = in.getInt();
-        if (size == 0) {
-            in.mark();
-        }
         return in.remaining() >= size ? size : -1;
     }
 
@@ -221,47 +214,42 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      * @return
      */
     protected AuthIdentity getIdentity(IoSession session) {
-        String address = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
+        long sessionId = session.getId();
+        AuthIdentity identity = identities.get(sessionId); // 本地身份
         synchronized (session) {
-            AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY);
-            /* 激活会话身份 */
-            active: if (identity == null) {
-                AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(session.getId(), session)); // 默认系统会话身份（令牌为通信链路会话）
-                cmd.setOperate(AuthCommand.OPERATE_LOGIN);
-                console.execute(cmd);
-                setIdentity(session, identity = cmd.getIdentity()); // 保存身份
-                session.setAttribute(ATTR_LOCAL, true);
-                identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout)); // 设置超时
-                identity.setAttribute(ATTR_CLIENT_IP, address);
-                getHandler().reload(this, identity);
-            } else {
-                try {
-                    identity.active(autoSession); // 激活身份
-                    identity.setAttribute(ATTR_CLIENT_IP, address);
-                    break active;
-                } catch (Exception e) {
-                    LOG.warn("(!) Failure to active session identity - {}", e.getMessage(), e.getCause());
+            if (session.isConnected()) {
+                /* 激活会话身份 */
+                String clientIp = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
+                active: if (identity == null) {
+                    AuthCommand cmd = AuthHelper.toCommand(Constants.SYSTEM, new BaseToken(sessionId, session)); // 默认系统会话身份（令牌为通信链路会话）
+                    cmd.setOperate(AuthCommand.OPERATE_LOGIN);
+                    console.execute(cmd);
+                    identities.put(sessionId, identity = cmd.getIdentity()); // 保存身份
+                    identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout)); // 设置超时
+                    /* 设置通信身份信息 */
+                    identity.setAttribute(ATTR_INTERNAL_IDENTITY, true);
+                    identity.setAttribute(ATTR_CLIENT_IP, clientIp);
+                    getHandler().reload(this, identity); // 重载身份
+                } else {
+                    try {
+                        identity.active(autoSession); // 激活身份
+                        /* 恢复通信身份信息（内部会话被切换时，属性可能会被清除） */
+                        identity.setAttribute(ATTR_CLIENT_IP, clientIp);
+                        break active;
+                    } catch (Exception e) {
+                        LOG.warn("(!) Failure to active session [{}] identity - {}", sessionId, e.getMessage(), e.getCause());
+                    }
+                    try {
+                        getHandler().unload(this, identity); // 卸载身份
+                    } catch (Exception e) {
+                        LOG.warn("(!) Failure to unload session [{}] identity - {}", sessionId, e.getMessage(), e.getCause());
+                    }
+                    identities.remove(sessionId); // 删除身份
+                    identity = getIdentity(session); // 重新获取
                 }
-                try {
-                    getHandler().unload(this, identity); // 卸载身份
-                } catch (Exception e) {
-                    LOG.warn("(!) Failure to unload session identity - {}", e.getMessage(), e.getCause());
-                }
-                setIdentity(session, null); // 删除身份
-                identity = getIdentity(session); // 重新获取
             }
-            return identity;
         }
-    }
-
-    /**
-     * 设置会话身份
-     *
-     * @param session
-     * @param identity
-     */
-    protected void setIdentity(IoSession session, AuthIdentity identity) {
-        session.setAttribute(ATTR_IDENTITY, identity);
+        return identity;
     }
 
     protected void close() {
