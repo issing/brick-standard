@@ -79,7 +79,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         if (timeout == null || timeout < 2) {
             timeout = 2; // 默认会话2分钟超时
         }
-        timeout += 5; // 超时延迟5分钟作为过渡
+        timeout += 5; // 超时内置延迟5分钟作为过渡
         /* 添加协议 */
         final ProtocolEncoder encoder = new ProtocolEncoderAdapter() {
             public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
