@@ -22,6 +22,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import net.isger.brick.core.Handler;
 import net.isger.util.Asserts;
+import net.isger.util.Helpers;
 
 public class NettyInbound extends NettyEndpoint {
 
@@ -39,11 +40,18 @@ public class NettyInbound extends NettyEndpoint {
 
     private transient Handler channeler;
 
+    /**
+     * 打开服务端口
+     */
     protected final void open() {
         super.open();
         /* 绑定服务端口 */
         InetSocketAddress address = getAddress();
         try {
+            /* 等待控制台就绪 */
+            while (!console.hasReady()) {
+                Helpers.sleep(200l);
+            }
             LOG.info("Listening [{}://{}]", getProtocolName(), address);
             channeler.handle(service = bootstrap.bind().sync().channel());
         } catch (Exception e) {

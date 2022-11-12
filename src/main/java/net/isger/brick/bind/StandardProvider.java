@@ -29,8 +29,7 @@ public class StandardProvider implements ContainerProvider {
         builder.factory(Charset.class, Constants.BRICK_ENCODING, new Callable<Charset>() {
             public Charset call(Object... args) {
                 Container container = (Container) args[0];
-                String encoding = container.getInstance(String.class, Constants.BRICK_ENCODING);
-                return Charset.forName(encoding);
+                return Charset.forName(container.getInstance(String.class, Constants.BRICK_ENCODING));
             }
         });
     }
