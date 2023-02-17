@@ -54,7 +54,7 @@ public class PersistProxy extends BasePersist {
         Object statementValue = cmd.getParameter(PluginConstants.PARAM_STATEMENT_VALUE);
         String persist = PluginCommand.getPersist(cmd);
         BoundMethod boundMethod;
-        if ((boundMethod = Reflects.getBoundMethod(targetClass, persist)) == null && (boundMethod = Reflects.getBoundMethod(targetClass, operate)) == null) {
+        if ((boundMethod = Reflects.getBoundMethod(targetClass, persist, true)) == null && (boundMethod = Reflects.getBoundMethod(targetClass, operate, true)) == null) {
             cmd.setCondition(statement);
         } else {
             Method method = boundMethod.getMethod();

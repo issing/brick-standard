@@ -6,7 +6,6 @@ import net.isger.brick.plugin.PluginCommand;
  * 服务
  * 
  * @author issing
- *
  */
 public interface Service {
 

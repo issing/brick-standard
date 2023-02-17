@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.AuthToken;
 import net.isger.util.Asserts;
-import net.isger.util.Helpers;
 
 /**
  * MINA入端
@@ -36,10 +35,6 @@ public class MinaInbound extends MinaEndpoint {
         /* 绑定服务端口 */
         InetSocketAddress address = getAddress();
         try {
-            /* 等待控制台就绪 */
-            while (!console.hasReady()) {
-                Helpers.sleep(200l);
-            }
             LOG.info("Listening [{}://{}]", getProtocolName(), address);
             ((IoAcceptor) getService()).bind(address);
         } catch (Exception e) {

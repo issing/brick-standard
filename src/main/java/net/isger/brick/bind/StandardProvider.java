@@ -24,7 +24,7 @@ public class StandardProvider implements ContainerProvider {
 
     public void register(ContainerBuilder builder) {
         builder.factory(Console.class, Constants.SYSTEM, StandardConsole.class, Scope.SINGLETON);
-        builder.constant(Constants.BRICK_ENCODING, Constants.DEFAULT_ENCODING);
+        builder.constant(Constants.BRICK_ENCODING, Constants.ENC_UTF8);
         builder.constant(Constants.BRICK_RAW, Constants.RAW_JSON);
         builder.factory(Charset.class, Constants.BRICK_ENCODING, new Callable<Charset>() {
             public Charset call(Object... args) {

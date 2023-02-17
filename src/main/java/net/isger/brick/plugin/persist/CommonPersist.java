@@ -195,11 +195,11 @@ public class CommonPersist extends PersistProxy {
         if (isMultiple) {
             List<Object> pendings = new ArrayList<Object>();
             for (Object pending : (Object[]) result) {
-                pendings.add(Helpers.getInstance(toResult(cmd, bean, null, (Object[]) pending), 0));
+                pendings.add(Helpers.getElement(toResult(cmd, bean, null, (Object[]) pending), 0));
             }
             result = pendings;
         } else {
-            result = Helpers.getInstance(toResult(cmd, bean, null, (Object[]) result), 0);
+            result = Helpers.getElement(toResult(cmd, bean, null, (Object[]) result), 0);
         }
         return result;
     }

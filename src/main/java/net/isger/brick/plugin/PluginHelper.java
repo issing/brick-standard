@@ -195,12 +195,33 @@ public class PluginHelper extends CoreHelper {
     /**
      * 服务接口
      * 
-     * @param pcmd
+     * @param clazz
+     * @return
+     */
+    public static <T> T service(Class<T> clazz) {
+        return service(null, clazz, null, null);
+    }
+
+    /**
+     * 服务接口
+     * 
+     * @param clazz
+     * @param domain
+     * @return
+     */
+    public static <T> T service(Class<T> clazz, String domain) {
+        return service(null, clazz, domain, null);
+    }
+
+    /**
+     * 服务接口
+     * 
+     * @param cmd
      * @param clazz
      * @return
      */
     public static <T> T service(PluginCommand cmd, Class<T> clazz) {
-        return service(cmd, clazz, null);
+        return service(cmd, clazz, null, null);
     }
 
     /**
@@ -225,6 +246,9 @@ public class PluginHelper extends CoreHelper {
      * @return
      */
     public static <T> T service(PluginCommand cmd, final Class<T> clazz, final String domain, final String name) {
+        if (cmd == null) {
+            cmd = PluginCommand.getAction();
+        }
         final PluginCommand shellCmd = new PluginCommand(cmd);
         return new Standin<T>(clazz) {
             public Object action(Method method, Object[] args) {

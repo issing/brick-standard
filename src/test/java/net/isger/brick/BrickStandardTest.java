@@ -38,7 +38,7 @@ public class BrickStandardTest extends TestCase {
                 return false;
             }
         });
-        MANAGER.getConsole().initial();
+        MANAGER.load();
     }
 
     public BrickStandardTest(String testName) {

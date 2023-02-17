@@ -7,6 +7,7 @@ import net.isger.brick.plugin.persist.Persist;
 import net.isger.brick.plugin.persist.Persists;
 import net.isger.brick.plugin.service.Service;
 import net.isger.brick.plugin.service.Services;
+import net.isger.util.Helpers;
 
 public class BasePlugin extends AbstractPlugin {
 
@@ -25,7 +26,7 @@ public class BasePlugin extends AbstractPlugin {
         for (Persist persist : persists.values()) {
             container.inject(persist);
         }
-        for (Entry<String, Service> entry : getServices().entrySet()) {
+        for (Entry<String, Service> entry : Helpers.sortByValue(getServices().entrySet())) {
             cmd = PluginCommand.mockAction();
             cmd.setName(entry.getKey());
             service = container.inject(entry.getValue());

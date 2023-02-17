@@ -65,7 +65,7 @@ public class MinaOutbound extends MinaEndpoint {
     protected void close() {
         for (IoSession session : sessions.values()) {
             if (session != null && session.isConnected()) {
-                session.close(true);
+                session.closeNow();
             }
         }
         sessions.clear();

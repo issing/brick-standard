@@ -1,89 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>net.isger</groupId>
-    <artifactId>brick-primary</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-  </parent>
-  <artifactId>brick-standard</artifactId>
-  <packaging>jar</packaging>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.isger</groupId>
+        <artifactId>brick-primary</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath />
+    </parent>
+    <artifactId>brick-standard</artifactId>
+    <packaging>jar</packaging>
 
-  <name>brick-standard</name>
-  <description>Brick standard framework</description>
-  <url>https://github.com/issing/brick-standard</url>
-
-  <scm>
-    <connection>scm:git:https://github.com/issing/brick-standard.git</connection>
-    <developerConnection>scm:git:git@github.com:issing/brick-standard.git</developerConnection>
+    <name>brick-standard</name>
+    <description>Brick standard framework</description>
     <url>https://github.com/issing/brick-standard</url>
-  </scm>
 
-  <properties>
-    <mybatis.version>3.5.6</mybatis.version>
+    <scm>
+        <connection>scm:git:https://github.com/issing/brick-standard.git</connection>
+        <developerConnection>scm:git:git@github.com:issing/brick-standard.git</developerConnection>
+        <url>https://github.com/issing/brick-standard</url>
+    </scm>
 
-    <hikaricp.version>2.4.13</hikaricp.version>
-    <redis.version>2.9.0</redis.version>
+    <properties>
+        <mybatis.version>3.5.6</mybatis.version>
 
-    <netty.version>4.1.17.Final</netty.version>
-    <mina.version>2.1.5</mina.version>
-    <shiro.version>1.10.0</shiro.version>
-  </properties>
+        <hikaricp.version>2.4.13</hikaricp.version>
+        <redis.version>2.9.0</redis.version>
 
-  <dependencies>
-    <!-- 测试依赖 -->
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mybatis</groupId>
-      <artifactId>mybatis</artifactId>
-      <version>${mybatis.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>net.isger</groupId>
-      <artifactId>brick-raw-gson</artifactId>
-      <version>${brick.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- 存储依赖 -->
-    <dependency>
-      <groupId>com.zaxxer</groupId>
-      <artifactId>HikariCP-java7</artifactId>
-      <version>${hikaricp.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>redis.clients</groupId>
-      <artifactId>jedis</artifactId>
-      <version>${redis.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <!-- 工具依赖 -->
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty-all</artifactId>
-      <version>${netty.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.mina</groupId>
-      <artifactId>mina-core</artifactId>
-      <version>${mina.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.shiro</groupId>
-      <artifactId>shiro-core</artifactId>
-      <version>${shiro.version}</version>
-    </dependency>
-    <!-- 砖头依赖 -->
-    <dependency>
-      <groupId>net.isger</groupId>
-      <artifactId>brick-core</artifactId>
-      <version>${brick.version}</version>
-    </dependency>
-  </dependencies>
+        <netty.version>4.1.17.Final</netty.version>
+        <mina.version>2.1.5</mina.version>
+        <shiro.version>1.10.0</shiro.version>
+    </properties>
+
+    <dependencies>
+        <!-- 测试依赖 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>${mybatis.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.isger</groupId>
+            <artifactId>brick-raw-gson</artifactId>
+            <version>${brick.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- 存储依赖 -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP-java7</artifactId>
+            <version>${hikaricp.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${redis.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- 工具依赖 -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-core</artifactId>
+            <version>${mina.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-core</artifactId>
+            <version>${shiro.version}</version>
+        </dependency>
+        <!-- 砖头依赖 -->
+        <dependency>
+            <groupId>net.isger</groupId>
+            <artifactId>brick-core</artifactId>
+            <version>${brick.version}</version>
+        </dependency>
+    </dependencies>
 </project>

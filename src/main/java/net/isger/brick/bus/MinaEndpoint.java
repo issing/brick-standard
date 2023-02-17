@@ -28,7 +28,6 @@ import net.isger.brick.auth.AuthCommand;
 import net.isger.brick.auth.AuthHelper;
 import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.BaseToken;
-import net.isger.brick.core.Console;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
@@ -49,11 +48,6 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     private static final int DATA_MIN_LIMIT = MAGIC.length + Integer.SIZE / 8;
 
     private static final Logger LOG;
-
-    /** 控制台 */
-    @Ignore(mode = Mode.INCLUDE)
-    @Alias(Constants.SYSTEM)
-    protected Console console;
 
     /** 总线 */
     @Ignore(mode = Mode.INCLUDE)
