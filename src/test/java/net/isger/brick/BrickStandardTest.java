@@ -20,7 +20,7 @@ import net.isger.brick.stub.StubCommand;
 import net.isger.brick.test.bean.Employ;
 import net.isger.brick.test.bean.EmployModel;
 import net.isger.util.Helpers;
-import net.isger.util.sql.Page;
+import net.isger.util.sql.Pager;
 
 public class BrickStandardTest extends TestCase {
 
@@ -73,7 +73,7 @@ public class BrickStandardTest extends TestCase {
         pcmd.setParameter("name", "first");
         MANAGER.getConsole().execute(pcmd);
         pcmd.setOperate("select");
-        pcmd.setParameter("page", new Page());
+        pcmd.setParameter("page", new Pager());
         MANAGER.getConsole().execute(pcmd);
     }
 
@@ -205,7 +205,7 @@ public class BrickStandardTest extends TestCase {
         showResult((Object[]) cmd.getResult());
 
         cmd.setTable(Employ.class);
-        cmd.setCondition(Helpers.wrap("%n%", new Page(1, 3)));
+        cmd.setCondition(Helpers.wrap("%n%", new Pager(1, 3)));
         MANAGER.getConsole().execute(cmd);
         showResult((Object[]) cmd.getResult());
     }

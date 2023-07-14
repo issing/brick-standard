@@ -11,7 +11,7 @@ import net.isger.util.Helpers;
 import net.isger.util.Strings;
 import net.isger.util.reflect.BoundMethod;
 import net.isger.util.reflect.Standin;
-import net.isger.util.sql.Page;
+import net.isger.util.sql.Pager;
 
 /**
  * 插件助手
@@ -278,11 +278,11 @@ public class PluginHelper extends CoreHelper {
     }
 
     public static void enablePage(BaseCommand cmd, boolean enabled) {
-        cmd.setParameter(PluginConstants.PARAM_PAGE, enabled ? cmd.getParameter(Page.class) : null);
+        cmd.setParameter(PluginConstants.PARAM_PAGE, enabled ? cmd.getParameter(Pager.class) : null);
     }
 
     public static boolean isEnablePage(BaseCommand cmd) {
-        return cmd.getParameter(PluginConstants.PARAM_PAGE) instanceof Page;
+        return cmd.getParameter(PluginConstants.PARAM_PAGE) instanceof Pager;
     }
 
 }

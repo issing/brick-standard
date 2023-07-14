@@ -28,8 +28,7 @@ public class StandardProvider implements ContainerProvider {
         builder.constant(Constants.BRICK_RAW, Constants.RAW_JSON);
         builder.factory(Charset.class, Constants.BRICK_ENCODING, new Callable<Charset>() {
             public Charset call(Object... args) {
-                Container container = (Container) args[0];
-                return Charset.forName(container.getInstance(String.class, Constants.BRICK_ENCODING));
+                return Charset.forName(((Container) args[0]).getInstance(String.class, Constants.BRICK_ENCODING));
             }
         });
     }

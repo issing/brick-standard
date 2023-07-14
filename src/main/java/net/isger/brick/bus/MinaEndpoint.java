@@ -1,6 +1,5 @@
 package net.isger.brick.bus;
 
-import java.io.ByteArrayInputStream;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -194,7 +193,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 }
                 byte[] content = new byte[size];
                 in.get(content);
-                Object message = getProtocol().getDecoder().decode(new ByteArrayInputStream(content));
+                Object message = getProtocol().getDecoder().decode(content);
                 boolean result = message != null;
                 if (result) {
                     out.write(message);
