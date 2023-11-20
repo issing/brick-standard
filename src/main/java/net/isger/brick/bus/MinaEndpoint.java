@@ -1,8 +1,6 @@
 package net.isger.brick.bus;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +25,7 @@ import net.isger.brick.auth.AuthCommand;
 import net.isger.brick.auth.AuthHelper;
 import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.BaseToken;
+import net.isger.brick.core.CoreHelper;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
@@ -46,6 +45,11 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     /** 最小报文 */
     private static final int DATA_MIN_LIMIT = MAGIC.length + Integer.SIZE / 8;
 
+    private static final String ATTR_IDENTITY = "brick.bus.identity";
+
+    /** 延迟超时（分钟） */
+    private static final int DELAY_TIMEOUT = 5;
+
     private static final Logger LOG;
 
     /** 总线 */
@@ -56,24 +60,21 @@ public abstract class MinaEndpoint extends SocketEndpoint {
     @Ignore(mode = Mode.INCLUDE)
     private boolean createable;
 
+    /** 超时时长（分钟） */
     @Ignore(mode = Mode.INCLUDE)
     private Integer timeout;
 
     /** 任务执行器 */
-    private ExecutorService executor;
+    private transient ExecutorService executor;
 
-    /** 会话管理器 */
-    private Map<Long, AuthIdentity> manager;
-
-    private IoService service;
+    private transient IoService service;
 
     static {
         LOG = LoggerFactory.getLogger(MinaEndpoint.class);
     }
 
     public MinaEndpoint() {
-        executor = Executors.newCachedThreadPool();
-        manager = new HashMap<Long, AuthIdentity>();
+        this.executor = Executors.newCachedThreadPool();
     }
 
     /**
@@ -81,20 +82,20 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      */
     protected void open() {
         synchronized (this) {
-            if (service != null) {
+            if (this.service != null) {
                 return;
             }
+            super.open();
+            this.service = createService(); // 创建服务
         }
-        super.open();
         /* 初始数据 */
-        service = createService(); // 创建服务
-        if (timeout == null || timeout < 1) {
-            timeout = 1; // 默认会话1分钟超时
+        if (this.timeout == null || this.timeout < 1) {
+            this.timeout = 1; // 默认会话1分钟超时【实际将会延迟5分钟，即6分钟超时】
         }
         /* 添加协议 */
         final ProtocolEncoder encoder = createEncoder();
         final ProtocolDecoder decoder = createDecoder();
-        service.getFilterChain().addLast(getProtocolName(), new ProtocolCodecFilter(new ProtocolCodecFactory() {
+        this.service.getFilterChain().addLast(getProtocolName(), new ProtocolCodecFilter(new ProtocolCodecFactory() {
             public ProtocolEncoder getEncoder(IoSession session) throws Exception {
                 return encoder;
             }
@@ -107,38 +108,38 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         service.setHandler(new IoHandlerAdapter() {
             public void sessionOpened(IoSession session) throws Exception {
                 AuthIdentity identity = getIdentity(session); // 会话重连时，身份为历史实例
+                /* 打开会话处理 */
+                LOG.info("Session [{}] opened of [{}]", session.getId(), identity.getToken().getPrincipal());
                 getHandler().open(MinaEndpoint.this, identity);
-                LOG.info("Session [{}] opened of [{}]", session.getId(), identity.getAttribute(ATTR_CLIENT_IP));
             }
 
             public void messageReceived(IoSession session, Object message) throws Exception {
                 AuthIdentity identity = getIdentity(session); // 会话失效时，身份为新建实例（空数据）
+                /* 接受消息处理 */
                 LOG.debug("Session [{}] received message: \r\n{}", session.getId(), message);
                 message = getHandler().handle(MinaEndpoint.this, identity, message);
                 if (message != null) {
-                    LOG.debug("Session [{}] send message: \r\n{}", session.getId(), message);
-                    session.write(message);
+                    LOG.debug("Session [{}] response message: \r\n{}", session.getId(), message);
+                    session.write(message); // 请求响应
                 }
             }
 
             public void sessionClosed(final IoSession session) throws Exception {
-                executor.execute(new Runnable() {
+                MinaEndpoint.this.executor.execute(new Runnable() {
                     public void run() {
-                        long sessionId = session.getId();
                         try {
                             AuthIdentity identity = getIdentity(session);
+                            /* 关闭会话处理 */
                             getHandler().close(MinaEndpoint.this, identity);
                             /* 注销连接会话 */
                             AuthCommand cmd = AuthHelper.makeCommand(Constants.SYSTEM, identity.getToken());
                             cmd.setIdentity(identity);
                             cmd.setOperate(AuthCommand.OPERATE_LOGOUT);
-                            console.execute(cmd);
+                            MinaEndpoint.this.console.execute(cmd);
                         } catch (Exception e) {
-                            LOG.warn("(!) Disconnect session exception - {}", e.getMessage(), e.getCause());
-                        } finally {
-                            manager.remove(sessionId);
+                            LOG.warn("(!) Disconnect session exception", e);
                         }
-                        LOG.info("Session [{}] closed", sessionId);
+                        LOG.info("Session [{}] closed", session.getId());
                     }
                 });
             }
@@ -246,39 +247,44 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      * @return
      */
     protected AuthIdentity getIdentity(IoSession session) {
-        long sessionId = session.getId();
-        AuthIdentity identity = manager.get(sessionId); // 通信身份
+        CoreHelper.setConsole(this.console);
+        AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY); // 获取会话身份
         active: synchronized (session) {
             if (session.isConnected()) {
                 /* 激活会话身份 */
-                String clientIp = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
+                String client = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress(); // 远程主机地址信息
                 if (identity == null) {
-                    AuthCommand cmd = AuthHelper.makeCommand(Constants.SYSTEM, new BaseToken(sessionId, session)); // 默认系统会话身份（令牌为通信链路会话）
-                    cmd.setOperate(AuthCommand.OPERATE_LOGIN);
-                    console.execute(cmd);
-                    manager.put(sessionId, identity = cmd.getIdentity()); // 保存身份
+                    // AuthCommand cmd =
+                    // AuthHelper.makeCommand(Constants.SYSTEM, new
+                    // BaseToken("brick.mina:" + sessionId, session));
+                    // 默认系统会话身份（令牌为通信链路会话）
+                    // cmd.setOperate(AuthCommand.OPERATE_LOGIN);
+                    // this.console.execute(cmd);
+                    // 生成系统会话身份（令牌为通信链路会话）
+                    session.setAttribute(ATTR_IDENTITY, identity = AuthHelper.toLogin(Constants.SYSTEM, new BaseToken(client, session)).getIdentity());
                     /* 设置通信身份信息 */
-                    identity.setAttribute(ATTR_CLIENT_IP, clientIp);
-                    identity.setTimeout((int) TimeUnit.MINUTES.toMillis(timeout + 5)); // 设置身份超时
-                    session.getConfig().setBothIdleTime((int) TimeUnit.MINUTES.toSeconds(timeout + 5)); // 设置会话超时
+                    // identity.setAttribute(ATTR_CLIENT, client);
+                    int timeout = (int) TimeUnit.MINUTES.toMillis(this.timeout + DELAY_TIMEOUT); // 延迟5分钟
+                    identity.setTimeout(timeout); // 设置身份超时
+                    session.getConfig().setBothIdleTime(timeout); // 设置会话超时
                     getHandler().reload(this, identity); // 重载身份
                 } else {
                     try {
-                        identity.active(createable); // 激活身份
+                        identity.active(this.createable); // 激活身份
                         break active;
                     } catch (Exception e) {
-                        LOG.warn("(!) Failure to active session [{}] identity - {}", sessionId, e.getMessage(), e.getCause());
+                        LOG.warn("(!) Failure to active session identity - {}", e.getMessage(), e.getCause());
                     }
                     try {
                         getHandler().unload(this, identity); // 卸载身份
                     } catch (Exception e) {
-                        LOG.warn("(!) Failure to unload session [{}] identity - {}", sessionId, e.getMessage(), e.getCause());
+                        LOG.warn("(!) Failure to unload session identity - {}", e.getMessage(), e.getCause());
                     }
-                    manager.remove(sessionId); // 删除身份
+                    session.removeAttribute(ATTR_IDENTITY); // 删除身份
                     identity = getIdentity(session); // 重新获取
                 }
                 /* 恢复通信身份信息（内部会话被切换时，属性可能会被清除） */
-                identity.setAttribute(ATTR_CLIENT_IP, clientIp);
+                // identity.setAttribute(ATTR_CLIENT, client);
             }
         }
         return identity;
@@ -289,9 +295,9 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      */
     protected void close() {
         synchronized (this) {
-            if (service != null) {
-                service.dispose(true);
-                service = null;
+            if (this.service != null) {
+                this.service.dispose(true);
+                this.service = null;
             }
         }
     }
