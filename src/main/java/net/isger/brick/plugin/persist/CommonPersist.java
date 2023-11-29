@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.isger.brick.Constants;
 import net.isger.brick.core.Console;
 import net.isger.brick.core.CoreHelper;
@@ -56,6 +59,8 @@ public class CommonPersist extends PersistProxy {
 
     public static final String STATEMENT_BATCH = "batch";
 
+    private static final Logger LOG;
+
     @Ignore(mode = Mode.INCLUDE)
     private boolean reset;
 
@@ -66,6 +71,10 @@ public class CommonPersist extends PersistProxy {
     private boolean create;
 
     private Object[] tables;
+
+    static {
+        LOG = LoggerFactory.getLogger(CommonPersist.class);
+    }
 
     public CommonPersist(Object... tables) {
         this(true, tables);
@@ -499,17 +508,7 @@ public class CommonPersist extends PersistProxy {
      * @return
      */
     private Object toExtend(final StubCommand cmd, Object result) {
-        // PersistExtend extend =
-        // cmd.getParameter(PluginConstants.PARAM_STATEMENT_EXTEND);
-        // if (extend == null) {
-        // return null;
-        // }
-        // Helpers.each(result, new Callable.Runnable() {
-        // public void run() {
-        //
-        // }
-        // });
-        System.out.println("this is CommonPersist.toExtend()");
+        LOG.debug("(!) The extension method for data result processing has not been implemented.");
         return result;
     }
 

@@ -246,9 +246,7 @@ public class PluginHelper extends CoreHelper {
      * @return
      */
     public static <T> T service(PluginCommand cmd, final Class<T> clazz, final String domain, final String name) {
-        if (cmd == null) {
-            cmd = PluginCommand.getAction().clone();
-        }
+        if (cmd == null) cmd = PluginCommand.getAction().clone();
         final PluginCommand shellCmd = new PluginCommand(cmd);
         return new Standin<T>(clazz) {
             public Object action(Method method, Object[] args) {
