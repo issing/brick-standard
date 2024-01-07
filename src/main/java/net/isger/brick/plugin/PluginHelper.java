@@ -279,7 +279,7 @@ public class PluginHelper extends CoreHelper {
         cmd.setParameter(PluginConstants.PARAM_PAGE, enabled ? cmd.getParameter(Pager.class) : null);
     }
 
-    public static boolean isEnablePage(BaseCommand cmd) {
+    public static boolean enabledPage(BaseCommand cmd) {
         return cmd.getParameter(PluginConstants.PARAM_PAGE) instanceof Pager;
     }
 

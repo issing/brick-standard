@@ -13,6 +13,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 
 import net.isger.brick.Constants;
 import net.isger.brick.core.Console;
+import net.isger.util.Asserts;
 import net.isger.util.Helpers;
 import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
@@ -45,22 +46,17 @@ public class ShiroRealm extends AuthorizingRealm {
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
         switch (token.size()) {
         case 1:
-            if (token.get(0) instanceof AuthInfo) {
-                addAuthInfo(info, (AuthInfo) token.get(0));
-            } else {
-                break;
-            }
+            if (token.get(0) instanceof AuthInfo) this.addAuthInfo(info, (AuthInfo) token.get(0));
+            else break;
         case 0:
             return info;
         }
         cmd.setToken(token);
         try {
-            console.execute(cmd);
-            if (cmd.getResult() instanceof AuthInfo) {
-                addAuthInfo(info, (AuthInfo) cmd.getResult());
-            }
+            this.console.execute(cmd);
+            if (cmd.getResult() instanceof AuthInfo) this.addAuthInfo(info, (AuthInfo) cmd.getResult());
         } catch (Exception e) {
-            throw new IllegalStateException("Failure to get authorization info", e);
+            throw Asserts.state("Failure to get authorization info", e);
         }
         return info;
     }

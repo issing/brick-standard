@@ -16,10 +16,12 @@ import net.isger.brick.core.CoreHelper;
 import net.isger.brick.plugin.PluginConstants;
 import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
+import net.isger.brick.stub.dialect.SqlDialect;
 import net.isger.brick.stub.model.Meta;
 import net.isger.brick.stub.model.Metas;
 import net.isger.brick.stub.model.Model;
 import net.isger.util.Callable;
+import net.isger.util.Extendable;
 import net.isger.util.Helpers;
 import net.isger.util.Reflects;
 import net.isger.util.Strings;
@@ -203,17 +205,17 @@ public class CommonPersist extends PersistProxy {
      * @param values
      */
     @Ignore(mode = Mode.INCLUDE)
-    public Object select(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values, @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args, @Alias(PluginConstants.PARAM_BEAN) Object bean, @Alias(PluginConstants.PARAM_PAGE) Pager page) {
+    public Object select(StubCommand cmd, @Alias(PluginConstants.PARAM_STATEMENT_ID) Object opcode, @Alias(PluginConstants.PARAM_STATEMENT_VALUE) Object[] values, @Alias(PluginConstants.PARAM_STATEMENT_ARGS) Object[] args, @Alias(PluginConstants.PARAM_BEAN) Object bean, @Alias(PluginConstants.PARAM_PAGE) Pager pager) {
         boolean isMultiple = Helpers.isMultiple(cmd.getTable());
         Object result = CoreHelper.toConsole(cmd);
         if (isMultiple) {
             List<Object> pendings = new ArrayList<Object>();
             for (Object pending : (Object[]) result) {
-                pendings.add(toResult(cmd, bean, page, (Object[]) pending));
+                pendings.add(toResult(cmd, bean, pager, (Object[]) pending));
             }
             result = pendings;
         } else {
-            result = toResult(cmd, bean, page, (Object[]) result);
+            result = toResult(cmd, bean, pager, (Object[]) result);
         }
         return result;
     }
@@ -247,16 +249,16 @@ public class CommonPersist extends PersistProxy {
      * 
      * @param cmd
      * @param bean
-     * @param page
+     * @param pager
      * @param grid
      * @return
      */
     @SuppressWarnings("unchecked")
-    private Object toResult(StubCommand cmd, Object bean, Pager page, Object[] grid) {
+    private Object toResult(StubCommand cmd, Object bean, Pager pager, Object[] grid) {
         Object result;
         Object value = grid[grid.length - 1];
         if (value instanceof Number) {
-            page.setTotal(((Number) value).intValue());
+            pager.setTotal(((Number) value).intValue());
         }
         if (bean == null) {
             bean = this.tables[0];
@@ -282,8 +284,8 @@ public class CommonPersist extends PersistProxy {
             result = toResult(cmd, rawClass, grid);
         }
         result = toExtend(cmd, result);
-        if (page != null) {
-            result = new Object[] { result, page };
+        if (pager != null) {
+            result = new Object[] { result, pager };
         }
         return result;
     }
@@ -399,12 +401,12 @@ public class CommonPersist extends PersistProxy {
             scmd = cmd.clone();
             models = new ArrayList<Model>();
             boundField = entry.getKey();
-            /* 获取映射目标 */
+            /* 获取映射目标（key为【目标对象唯一标志】，value为【源对象】） */
             final Map<Object, List<Object>> targets = new HashMap<Object, List<Object>>();
-            if (Strings.isEmpty(resultMeta.targetField)) {
-                targets.putAll(resultMeta.mapping);
-            } else {
-                /* 查询映射数据（关系表） */
+            final Map<Object, Map<String, Object>> targetExtends = new HashMap<Object, Map<String, Object>>();
+            if (Strings.isEmpty(resultMeta.targetField)) targets.putAll(resultMeta.mapping);
+            // 含映射目标字段，需要查询对应的映射数据（映射关系表）
+            else {
                 scmd.setTable(models);
                 for (Object sourceValue : resultMeta.mapping.keySet()) {
                     models.add(model = resultMeta.model.clone());
@@ -417,9 +419,13 @@ public class CommonPersist extends PersistProxy {
                         Object[] outerArgs = (Object[]) args[2];
                         Model mappingModel = ((List<Model>) outerArgs[0]).get(index); // 获取映射数据结果集对应模型
                         ResultMeta outerMeta = (ResultMeta) outerArgs[1];
-                        List<Object> instances = outerMeta.mapping.get(mappingModel.metaValue(outerMeta.sourceColumn)); // 待映射实例
+                        List<Object> instances = outerMeta.mapping.get(mappingModel.metaValue(outerMeta.sourceColumn)); // 待映射实例集合
+                        Object targetkey;
                         for (Map<String, Object> value : values) {
-                            Helpers.toAppend(targets, value.get(outerMeta.targetField), instances, false); // 添加映射目标
+                            Helpers.toAppend(targets, targetkey = value.get(outerMeta.targetField), instances, false); // 对映射目标实例唯一标识，添加待映射实例集合
+                            value.remove(Strings.toFieldName(outerMeta.sourceColumn));
+                            value.remove(outerMeta.targetField);
+                            targetExtends.put(targetkey, value);
                         }
                     }
                 }, models, resultMeta);
@@ -434,10 +440,15 @@ public class CommonPersist extends PersistProxy {
             }
             if (rawClass.isInterface()) {
                 rawClass = console.getContainer().getInstance(Class.class, (Strings.toColumnName(rawClass.getSimpleName()).replaceAll("[_]", ".") + ".class"));
+            } else if (rawClass == Object.class) {
+                rawClass = Map.class;
             }
             final Map<Object, List<Object>> pending = new HashMap<Object, List<Object>>(); // 待注入值
+            String targetColumn = resultMeta.targetColumn;
+            Model targetModel; // 当rawClass为Class<Object>或Class<Map>时，需要获取目标列描述值所指向的表名作为模型
+            String[] targetColumnParts;
             /* 目标直接赋值（未配置目标列） */
-            if (Strings.isEmpty(resultMeta.targetColumn)) {
+            if (Strings.isEmpty(targetColumn) || (targetModel = (rawClass == Map.class ? ((targetColumnParts = targetColumn.split("[.]")).length == 2 && Strings.isNotEmpty(targetColumn = targetColumnParts[1]) ? SqlDialect.getModel(targetColumnParts[0]) : null) : Model.create(rawClass))) == null) {
                 for (Entry<Object, List<Object>> targetEntry : targets.entrySet()) {
                     for (Object instance : targetEntry.getValue()) {
                         Helpers.toAppend(pending, instance, targetEntry.getKey(), false);
@@ -448,8 +459,7 @@ public class CommonPersist extends PersistProxy {
             else {
                 // 构建目标查询模型（根据唯一键）
                 List<Object> sources = new ArrayList<Object>();
-                Model targetModel = Model.create(rawClass);
-                targetModel.metaEmpty();
+                targetModel.metaEmpty(); // 清空模型值
                 scmd.setTable(models = new ArrayList<Model>());
                 for (Object targetValue : targets.keySet()) {
                     if (Strings.isEmpty(targetValue)) {
@@ -457,32 +467,38 @@ public class CommonPersist extends PersistProxy {
                     }
                     // 为模型设定检索值
                     models.add(model = targetModel.clone());
-                    model.metaValue(resultMeta.targetColumn, targetValue); // 列值（目标字段）
+                    model.metaValue(targetColumn, targetValue); // 列值（目标字段）
                     // 添加源对象（用于外部表容错）
                     Map<String, Object> source = new HashMap<String, Object>();
-                    source.put(resultMeta.targetColumn, targetValue);
+                    source.put(targetColumn, targetValue);
                     sources.add(Reflects.newInstance(rawClass, source));
                 }
                 if (models.size() > 0) {
                     Object instances;
                     try {
-                        instances = single(scmd, null, null, null, rawClass);
+                        instances = single(scmd, null, null, null, rawClass); // 查询出所有映射目标对象
                     } catch (Exception e) {
                         instances = sources;
                     }
-                    Helpers.each(instances, new Callable<Void>() {
-                        public Void call(Object... args) {
+                    Helpers.each(instances, new Callable.Runnable() {
+                        public void run(Object... args) {
                             Object instance = args[1];
                             Object[] outerArgs = (Object[]) args[2];
-                            Object key = ((Meta) outerArgs[0]).getValue(instance);
+                            Object key = ((Meta) outerArgs[0]).getValue(instance); // 获取映射目标对象标识
                             if (key != null) {
+                                if (targetExtends.containsKey(key)) {
+                                    if (instance instanceof Extendable) {
+                                        ((Extendable) instance).setExtends(targetExtends.get(key)); // 为映射目标对象添加扩展数据
+                                    } else if (instance instanceof Map) {
+                                        ((Map<String, Object>) instance).putAll(targetExtends.get(key));
+                                    }
+                                }
                                 for (Object o : targets.get(key)) {
-                                    Helpers.toAppend(pending, o, instance, false);
+                                    Helpers.toAppend(pending, o, instance, false); // 为源对象建立映射目标对象
                                 }
                             }
-                            return null;
                         }
-                    }, targetModel.meta(resultMeta.targetColumn));
+                    }, targetModel.meta(targetColumn));
                 }
             }
             /* 完成数据映射 */
