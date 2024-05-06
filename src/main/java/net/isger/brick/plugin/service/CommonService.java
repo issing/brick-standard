@@ -1,5 +1,8 @@
 package net.isger.brick.plugin.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.isger.brick.plugin.PluginCommand;
 import net.isger.brick.plugin.PluginHelper;
 import net.isger.brick.stub.StubCommand;
@@ -10,6 +13,10 @@ import net.isger.util.anno.Ignore.Mode;
 @Ignore
 public class CommonService extends BaseService {
 
+    private static final Logger LOG;
+
+    public static final String OPERATE_INITIAL = "initial";
+
     public static final String OPERATE_INSERT = "insert";
 
     public static final String OPERATE_DELETE = "delete";
@@ -18,19 +25,21 @@ public class CommonService extends BaseService {
 
     public static final String OPERATE_SELECT = "select";
 
-    public static final String PARAM_OPCODE = "service.opcode";
+    public static final String OPERATE_DESTROY = "destroy";
 
-    public static final String OPCODE_ID = "id";
-
-    public static final String OPCODE_NORMAL = "normal";
-
-    public static final String OPCODE_BATCH = "batch";
-
-    public static final String PARAM_VALUE = "service.value";
+    static {
+        LOG = LoggerFactory.getLogger(CommonService.class);
+    }
 
     @Ignore(mode = Mode.INCLUDE)
     public void initial(PluginCommand cmd) {
-        PluginHelper.toPersist(cmd, OPERATE_INITIAL);
+        super.initial();
+        try {
+            PluginHelper.toPersist(cmd, OPERATE_INITIAL);
+        } catch (RuntimeException e) {
+            LOG.debug("Failure to initial service [{}]", this.getClass().getName());
+            throw e;
+        }
     }
 
     @Ignore(mode = Mode.INCLUDE)
@@ -38,7 +47,7 @@ public class CommonService extends BaseService {
         PluginHelper.toPersist(cmd, OPERATE_INSERT);
     }
 
-    public Object insert(PluginCommand cmd, Object table) {
+    protected Object insert(PluginCommand cmd, Object table) {
         StubCommand.setTable(cmd, table);
         PluginHelper.toPersist(cmd, OPERATE_INSERT);
         return table;
@@ -49,7 +58,7 @@ public class CommonService extends BaseService {
         PluginHelper.toPersist(cmd, OPERATE_DELETE);
     }
 
-    public void delete(PluginCommand cmd, Object table) {
+    protected void delete(PluginCommand cmd, Object table) {
         StubCommand.setTable(cmd, table);
         PluginHelper.toPersist(cmd, OPERATE_DELETE);
     }
@@ -59,11 +68,11 @@ public class CommonService extends BaseService {
         PluginHelper.toPersist(cmd, OPERATE_UPDATE);
     }
 
-    public void update(PluginCommand cmd, Object... table) {
+    protected void update(PluginCommand cmd, Object... table) {
         update(cmd, Helpers.groups(table));
     }
 
-    public void update(PluginCommand cmd, Object[]... table) {
+    protected void update(PluginCommand cmd, Object[]... table) {
         StubCommand.setTable(cmd, table);
         PluginHelper.toPersist(cmd, OPERATE_UPDATE);
     }
@@ -73,7 +82,7 @@ public class CommonService extends BaseService {
         PluginHelper.toPersist(cmd, OPERATE_SELECT);
     }
 
-    public void select(PluginCommand cmd, Object table) {
+    protected void select(PluginCommand cmd, Object table) {
         StubCommand.setTable(cmd, table);
         PluginHelper.toPersist(cmd, OPERATE_SELECT);
     }
@@ -81,6 +90,7 @@ public class CommonService extends BaseService {
     @Ignore(mode = Mode.INCLUDE)
     public void destroy(PluginCommand cmd) {
         PluginHelper.toPersist(cmd, OPERATE_DESTROY);
+        super.destroy();
     }
 
 }

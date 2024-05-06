@@ -22,7 +22,6 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import net.isger.brick.core.Handler;
 import net.isger.util.Asserts;
-import net.isger.util.Helpers;
 
 public class NettyInbound extends NettyEndpoint {
 
@@ -48,10 +47,6 @@ public class NettyInbound extends NettyEndpoint {
         /* 绑定服务端口 */
         InetSocketAddress address = getAddress();
         try {
-            /* 等待控制台就绪 */
-            while (!console.hasReady()) {
-                Helpers.sleep(200l);
-            }
             LOG.info("Listening [{}://{}]", getProtocolName(), address);
             channeler.handle(service = bootstrap.bind().sync().channel());
         } catch (Exception e) {
@@ -71,6 +66,10 @@ public class NettyInbound extends NettyEndpoint {
             bootstrap.option(ChannelOption.IP_MULTICAST_LOOP_DISABLED, false);
             bootstrap.option(ChannelOption.SO_REUSEADDR, true);
             channeler = new Handler() {
+                public int getStatus() {
+                    return 1;
+                }
+
                 public Object handle(Object message) {
                     open((DatagramChannel) message);
                     return null;
@@ -84,6 +83,10 @@ public class NettyInbound extends NettyEndpoint {
             }).childHandler(initializer);
             bootstrap.localAddress(getAddress());
             channeler = new Handler() {
+                public int getStatus() {
+                    return 1;
+                }
+
                 public Object handle(Object message) {
                     open((ServerChannel) message);
                     return null;

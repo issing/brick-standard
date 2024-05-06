@@ -66,9 +66,9 @@ public class CommonPersist extends PersistProxy {
     @Ignore(mode = Mode.INCLUDE)
     private boolean reset;
 
-    @Ignore(mode = Mode.INCLUDE)
     @Alias(Constants.SYSTEM)
-    private Console console;
+    @Ignore(mode = Mode.INCLUDE, serialize = false)
+    protected Console console;
 
     private boolean create;
 
@@ -302,8 +302,8 @@ public class CommonPersist extends PersistProxy {
                 return rawClass;
             }
 
-            public Object assemble(BoundField field, Object instance, Object value, Object... args) {
-                Map<String, Object> data = (Map<String, Object>) args[0]; // 行值（原始数据）
+            public Object assemble(BoundField field, Object instance, Object value, Map<String, ? extends Object>... args) {
+                Map<String, ? extends Object> data = args[args.length - 1]; // 行值（原始数据）
                 /* 字段结果元 */
                 ResultMeta resultMeta = metas.get(field);
                 if (resultMeta == null) {

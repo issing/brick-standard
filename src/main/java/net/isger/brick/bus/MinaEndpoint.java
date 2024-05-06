@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.service.IoService;
 import org.apache.mina.core.session.IoSession;
@@ -26,7 +27,6 @@ import net.isger.brick.auth.AuthHelper;
 import net.isger.brick.auth.AuthIdentity;
 import net.isger.brick.auth.BaseToken;
 import net.isger.brick.core.CoreHelper;
-import net.isger.util.anno.Alias;
 import net.isger.util.anno.Ignore;
 import net.isger.util.anno.Ignore.Mode;
 
@@ -47,22 +47,14 @@ public abstract class MinaEndpoint extends SocketEndpoint {
 
     private static final String ATTR_IDENTITY = "brick.bus.identity";
 
-    /** 延迟超时（分钟） */
-    private static final int DELAY_TIMEOUT = 5;
-
     private static final Logger LOG;
-
-    /** 总线 */
-    @Ignore(mode = Mode.INCLUDE)
-    @Alias(Constants.SYSTEM)
-    private Bus bus;
 
     @Ignore(mode = Mode.INCLUDE)
     private boolean createable;
 
     /** 超时时长（分钟） */
     @Ignore(mode = Mode.INCLUDE)
-    private Integer timeout;
+    private int timeout;
 
     /** 任务执行器 */
     private transient ExecutorService executor;
@@ -82,20 +74,17 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      */
     protected void open() {
         synchronized (this) {
-            if (this.service != null) {
-                return;
-            }
+            if (this.service != null) return;
             super.open();
             this.service = createService(); // 创建服务
         }
         /* 初始数据 */
-        if (this.timeout == null || this.timeout < 1) {
-            this.timeout = 1; // 默认会话1分钟超时【实际将会延迟5分钟，即6分钟超时】
-        }
+        this.timeout = (int) TimeUnit.MINUTES.toMillis(Math.max(this.timeout, 5)); // 默认会话5分钟超时
         /* 添加协议 */
         final ProtocolEncoder encoder = createEncoder();
         final ProtocolDecoder decoder = createDecoder();
-        this.service.getFilterChain().addLast(getProtocolName(), new ProtocolCodecFilter(new ProtocolCodecFactory() {
+        DefaultIoFilterChainBuilder filterChain = this.service.getFilterChain();
+        filterChain.addLast(getProtocolName(), new ProtocolCodecFilter(new ProtocolCodecFactory() {
             public ProtocolEncoder getEncoder(IoSession session) throws Exception {
                 return encoder;
             }
@@ -107,20 +96,30 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         /* 设置处理器 */
         service.setHandler(new IoHandlerAdapter() {
             public void sessionOpened(IoSession session) throws Exception {
-                AuthIdentity identity = getIdentity(session); // 会话重连时，身份为历史实例
-                /* 打开会话处理 */
-                LOG.info("Session [{}] opened of [{}]", session.getId(), identity.getToken().getPrincipal());
-                getHandler().open(MinaEndpoint.this, identity);
+                AuthIdentity identity = getIdentity(session);
+                if (identity != null) {
+                    /* 打开会话处理 */
+                    LOG.info("Session [{}] opened of [{}]", session.getId(), identity.getToken().getPrincipal());
+                    try {
+                        MinaEndpoint.this.getHandler().open(MinaEndpoint.this, identity);
+                        return;
+                    } catch (Throwable cause) {
+                        if (LOG.isDebugEnabled()) LOG.warn("(!) Session [{}] open post-processing failed", session.getId(), cause);
+                    }
+                }
+                session.closeNow(); // 关闭会话
             }
 
             public void messageReceived(IoSession session, Object message) throws Exception {
                 AuthIdentity identity = getIdentity(session); // 会话失效时，身份为新建实例（空数据）
-                /* 接受消息处理 */
-                LOG.debug("Session [{}] received message: \r\n{}", session.getId(), message);
-                message = getHandler().handle(MinaEndpoint.this, identity, message);
-                if (message != null) {
-                    LOG.debug("Session [{}] response message: \r\n{}", session.getId(), message);
-                    session.write(message); // 请求响应
+                if (identity != null) {
+                    /* 接受消息处理 */
+                    LOG.debug("Session [{}] received message: \r\n{}", session.getId(), message);
+                    message = MinaEndpoint.this.getHandler().handle(MinaEndpoint.this, identity, message);
+                    if (message != null) {
+                        LOG.debug("Session [{}] response message: \r\n{}", session.getId(), message);
+                        session.write(message); // 请求响应
+                    }
                 }
             }
 
@@ -130,7 +129,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                         try {
                             AuthIdentity identity = getIdentity(session);
                             /* 关闭会话处理 */
-                            getHandler().close(MinaEndpoint.this, identity);
+                            MinaEndpoint.this.getHandler().close(MinaEndpoint.this, identity);
                             /* 注销连接会话 */
                             AuthCommand cmd = AuthHelper.makeCommand(Constants.SYSTEM, identity.getToken());
                             cmd.setIdentity(identity);
@@ -144,6 +143,8 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 });
             }
         });
+        /* 端点激活 */
+        this.toActive();
     }
 
     /**
@@ -214,14 +215,10 @@ public abstract class MinaEndpoint extends SocketEndpoint {
         byte value;
         int index = 0;
         for (;;) {
-            if (in.remaining() < DATA_MIN_LIMIT - index) {
-                return -1;
-            }
+            if (in.remaining() < DATA_MIN_LIMIT - index) return -1;
             value = in.get();
             if (value == MAGIC[index++]) {
-                if (index == MAGIC.length) {
-                    break;
-                }
+                if (index == MAGIC.length) break;
             } else {
                 in.mark();
                 index = 0;
@@ -246,7 +243,7 @@ public abstract class MinaEndpoint extends SocketEndpoint {
      * @param session
      * @return
      */
-    protected AuthIdentity getIdentity(IoSession session) {
+    protected AuthIdentity getIdentity(final IoSession session) {
         CoreHelper.setConsole(this.console);
         AuthIdentity identity = (AuthIdentity) session.getAttribute(ATTR_IDENTITY); // 获取会话身份
         active: synchronized (session) {
@@ -254,37 +251,27 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                 /* 激活会话身份 */
                 String client = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress(); // 远程主机地址信息
                 if (identity == null) {
-                    // AuthCommand cmd =
-                    // AuthHelper.makeCommand(Constants.SYSTEM, new
-                    // BaseToken("brick.mina:" + sessionId, session));
-                    // 默认系统会话身份（令牌为通信链路会话）
-                    // cmd.setOperate(AuthCommand.OPERATE_LOGIN);
-                    // this.console.execute(cmd);
                     // 生成系统会话身份（令牌为通信链路会话）
                     session.setAttribute(ATTR_IDENTITY, identity = AuthHelper.toLogin(Constants.SYSTEM, new BaseToken(client, session)).getIdentity());
                     /* 设置通信身份信息 */
-                    // identity.setAttribute(ATTR_CLIENT, client);
-                    int timeout = (int) TimeUnit.MINUTES.toMillis(this.timeout + DELAY_TIMEOUT); // 延迟5分钟
-                    identity.setTimeout(timeout); // 设置身份超时
-                    session.getConfig().setBothIdleTime(timeout); // 设置会话超时
-                    getHandler().reload(this, identity); // 重载身份
+                    session.getConfig().setBothIdleTime(this.timeout); // 设置会话超时
+                    identity.setTimeout(this.timeout); // 设置身份超时
+                    this.getHandler().reload(this, identity); // 重载身份
                 } else {
                     try {
-                        identity.active(this.createable); // 激活身份
+                        identity.active(this.createable); // 激活身份（将自动更新访问频率）
                         break active;
                     } catch (Exception e) {
-                        LOG.warn("(!) Failure to active session identity - {}", e.getMessage(), e.getCause());
+                        LOG.warn("(!) Failure to active session identity, Need to regenerate session identity - {}", e.getMessage(), e.getCause());
                     }
                     try {
-                        getHandler().unload(this, identity); // 卸载身份
+                        this.getHandler().unload(this, identity); // 卸载身份
                     } catch (Exception e) {
                         LOG.warn("(!) Failure to unload session identity - {}", e.getMessage(), e.getCause());
                     }
                     session.removeAttribute(ATTR_IDENTITY); // 删除身份
                     identity = getIdentity(session); // 重新获取
                 }
-                /* 恢复通信身份信息（内部会话被切换时，属性可能会被清除） */
-                // identity.setAttribute(ATTR_CLIENT, client);
             }
         }
         return identity;

@@ -78,6 +78,7 @@ public abstract class NettyEndpoint extends SocketEndpoint {
                 channel.pipeline().addLast(decoder, encoder, handler);
             }
         });
+        this.toActive();
     }
 
     /**

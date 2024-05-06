@@ -15,7 +15,7 @@ import net.isger.brick.auth.AuthToken;
 import net.isger.util.Asserts;
 
 /**
- * MINA入端
+ * 【MINA】入端
  * 
  * @author issing
  */

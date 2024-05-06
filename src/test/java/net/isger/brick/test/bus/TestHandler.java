@@ -10,6 +10,10 @@ public class TestHandler implements IdentityHandler {
 
     private int amount;
 
+    public int getStatus() {
+        return 1;
+    }
+
     public void open(Endpoint endpoint, AuthIdentity identity) {
     }
 
