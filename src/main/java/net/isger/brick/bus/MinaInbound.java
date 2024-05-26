@@ -79,6 +79,7 @@ public class MinaInbound extends MinaEndpoint {
         Object payload = cmd.getPayload();
         IoSession session;
         if (payload != null && (session = getSession(cmd)) != null) {
+            LOG.debug("Session [{}] send message: \r\n{}", session.getId(), payload);
             session.write(payload);
         }
     }
