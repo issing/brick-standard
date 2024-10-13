@@ -1,8 +1,17 @@
 package net.isger.brick.auth;
 
+import org.apache.shiro.session.ExpiredSessionException;
 import org.apache.shiro.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ShiroIdentity extends AuthIdentity {
+
+    private static final Logger LOG;
+
+    static {
+        LOG = LoggerFactory.getLogger(ShiroIdentity.class);
+    }
 
     public boolean isLogin() {
         return super.isLogin() && getToken().getSubject().isAuthenticated();
@@ -29,7 +38,12 @@ public class ShiroIdentity extends AuthIdentity {
     }
 
     public Object getAttribute(String name) {
-        return getToken().getSubject().getSession().getAttribute(name);
+        try {
+            return getToken().getSubject().getSession().getAttribute(name);
+        } catch (ExpiredSessionException e) {
+            LOG.warn("(!) Failure to get attribute[{}] - {}", name, e.getMessage());
+            return super.getAttribute(name);
+        }
     }
 
     public void setAttribute(String name, Object value) {
