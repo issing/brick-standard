@@ -170,7 +170,6 @@ public abstract class MinaEndpoint extends SocketEndpoint {
                     buffer.put(value);
                     buffer.flip();
                     out.write(buffer);
-                    out.flush();
                 }
             }
         };
